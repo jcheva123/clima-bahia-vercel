@@ -142,7 +142,7 @@
         document.getElementById('hist-nov').textContent = data.summaries.historicalNov;
         document.getElementById('year-rain').textContent = data.summaries.yearly;
         renderPrecipTable(data.precipRecords);
-        renderChart(data.monthlyRain);
+     //   renderChart(data.monthlyRain);
       } catch (err) {
         console.error('Error:', err);
         document.getElementById('forecast-container').innerHTML = '<div class="alert alert-danger">Error al cargar datos. Intenta recargar.</div>';
@@ -187,37 +187,7 @@
       });
     }
 
-    function renderChart(monthlyRain) {
-      const ctx = document.getElementById('rainChart').getContext('2d');
-      if (window.myChart) window.myChart.destroy();
-      window.myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: monthlyRain.map(m => m.month),
-          datasets: [{
-            label: 'Precipitación (mm)',
-            data: monthlyRain.map(m => m.mm),
-            backgroundColor: '#17a2b8',
-            borderColor: '#117a8b',
-            borderWidth: 1
-          }, {
-            label: 'Media Histórica Nov',
-            data: monthlyRain.map((_, i) => i === 10 ? 57.2 : null),
-            type: 'line',
-            borderColor: '#dc3545',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            fill: false
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, title: { display: true, text: 'Milímetros (mm)' } } },
-          plugins: { legend: { position: 'top' } }
-        }
-      });
-    }
+
 
     // === IMAGEN SMN DINÁMICA ===
     function updateSMNImage() {
@@ -256,3 +226,4 @@
 </body>
 
 </html>
+
