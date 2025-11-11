@@ -23,12 +23,7 @@ module.exports = async (req, res) => {
     const todayRain = 13.8;
     const monthRain = 8 + todayRain;
 
-    const monthlyRain = [
-      { month: "Ene", mm: 42.5 }, { month: "Feb", mm: 35.8 }, { month: "Mar", mm: 58.2 },
-      { month: "Abr", mm: 52.1 }, { month: "May", mm: 45.3 }, { month: "Jun", mm: 38.7 },
-      { month: "Jul", mm: 32.4 }, { month: "Ago", mm: 36.9 }, { month: "Sep", mm: 39.6 },
-      { month: "Oct", mm: 12.4 }, { month: "Nov", mm: monthRain }
-    ];
+
 
     res.json({
       timestamp: new Date().toISOString(),
@@ -46,3 +41,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: 'Error' });
   }
 };
+
