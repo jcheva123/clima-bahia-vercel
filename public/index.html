@@ -129,123 +129,121 @@
   </footer>
 
   <script>
-    // === CARGAR DATOS DEL BACKEND ===
-    async function loadData() {
-      try {
-        const res = await fetch('/api/data');
-        if (!res.ok) throw new Error('Error en API');
-        const data = await res.json();
+async function loadData() {
+    try {
+      const res = await fetch('/api/data');
+      if (!res.ok) throw new Error('Error en API');
+      const data = await res.json();
 
-        renderForecast(data.forecast);
-        document.getElementById('today-rain').textContent = data.summaries.today;
-        document.getElementById('month-rain').textContent = data.summaries.month;
-        document.getElementById('hist-nov').textContent = data.summaries.historicalNov;
-        document.getElementById('year-rain').textContent = data.summaries.yearly;
-        renderPrecipTable(data.precipRecords);
-     //   renderChart(data.monthlyRain);
-      } catch (err) {
-        console.error('Error:', err);
-        document.getElementById('forecast-container').innerHTML = '<div class="alert alert-danger">Error al cargar datos. Intenta recargar.</div>';
-      }
+      renderForecast(data.forecast);
+      document.getElementById('today-rain').textContent = data.summaries.today;
+      document.getElementById('month-rain').textContent = data.summaries.month;
+      document.getElementById('hist-nov').textContent = data.summaries.historicalNov;
+      document.getElementById('year-rain').textContent = data.summaries.yearly;
+      renderPrecipTable(data.precipRecords);
+    } catch (err) {
+      console.error('Error en scraping:', err);
+      // Fallback si falla
+      document.getElementById('forecast-container').innerHTML = '<div class="alert alert-warning">Datos en mantenimiento. Usando cache local.</div>';
+      // Carga datos hardcodeados como backup
+      renderForecast([{ day: "Error", date: "N/A", min: 16, max: 21, cond: "Cargando...", icon: "☁️" }]);
+      document.getElementById('today-rain').textContent = '—';
+      document.getElementById('month-rain').textContent = '—';
+      document.getElementById('hist-nov').textContent = '57.2 mm';
+      document.getElementById('year-rain').textContent = '986.1 mm';
+      renderPrecipTable([]);
     }
-
-    // === RENDER FUNCTIONS ===
-    function renderForecast(forecast) {
-      const container = document.getElementById("forecast-container");
-      container.innerHTML = '';
-      forecast.forEach(d => {
-        container.innerHTML += `
-          <div class="col-12 col-sm-6 col-md-4 col-lg">
-            <div class="card card-day h-100 text-center border-0 shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title mb-1">${d.day} <small class="text-muted">${d.date}</small></h5>
-                <div class="display-4">${d.icon}</div>
-                <p class="mb-1">${d.cond}</p>
-                <p class="mb-1"><strong>${d.min}°</strong> / ${d.max}°</p>
-                ${d.rain ? `<span class="badge badge-rain">Lluvia ${d.rain}</span>` : ''}
-              </div>
-            </div>
-          </div>`;
-      });
-    }
-
-    function renderPrecipTable(records) {
-      const tbody = document.getElementById("precip-table");
-      tbody.innerHTML = '';
-      if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Sin registros</td></tr>';
-        return;
-      }
-      records.forEach(r => {
-        tbody.innerHTML += `
-          <tr>
-            <td><strong>${r.datetime.split(" ")[1]}</strong><br><small>${r.datetime.split(" ")[0]}</small></td>
-            <td>${r.cond}</td>
-            <td><strong>${r.rain} mm</strong></td>
-            <td><small>${r.source}</small></td>
-          </tr>`;
-      });
-    }
-
-
-
-    // === IMAGEN SMN DINÁMICA ===
-function updateSMNImage() {
-  const now = new Date();
-  const pad = n => n.toString().padStart(2, '0');
-  const yyyy = now.getFullYear();
-  const mm = pad(now.getMonth() + 1);
-  const dd = pad(now.getDate());
-  
-  // SMN solo actualiza en minutos 20 y 50
-  const minutes = now.getMinutes();
-  let targetMin = 50;
-  if (minutes < 20) {
-    // Usa la de la hora anterior + 50
-    const prevHour = new Date(now.getTime() - 60 * 60 * 1000);
-    const hh = pad(prevHour.getHours());
-    const filename = `TOP_C13_CEN_ALTA_${yyyy}${mm}${dd}_${hh}50Z.jpg`;
-    const url = `https://estaticos.smn.gob.ar/vmsr/satelite/${filename}`;
-    document.getElementById("smn-img").src = url + '?t=' + Date.now();
-    return;
-  } else if (minutes < 50) {
-    targetMin = 20;
   }
-  
-  const hh = pad(now.getHours());
-  const filename = `TOP_C13_CEN_ALTA_${yyyy}${mm}${dd}_${hh}${targetMin}20Z.jpg`;
-  const url = `https://estaticos.smn.gob.ar/vmsr/satelite/${filename}`;
-  
-  const img = document.getElementById("smn-img");
-  img.src = url + '?t=' + Date.now();
-  
-  // Fallback si no existe
-  img.onerror = () => {
-    const fallback = `https://estaticos.smn.gob.ar/vmsr/satelite/TOP_C13_CEN_ALTA_20251111_144020Z.jpg`;
-    img.src = fallback;
-  };
-}
 
-    // === RELOJ ===
-    function updateTime() {
-      const now = new Date();
-      document.getElementById("current-time").textContent = now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
-      document.getElementById("update-time").textContent = now.toLocaleTimeString('es-AR');
+  // === RENDER FUNCTIONS ===
+  function renderForecast(forecast) {
+    const container = document.getElementById("forecast-container");
+    container.innerHTML = '';
+    forecast.forEach(d => {
+      container.innerHTML += `
+        <div class="col-12 col-sm-6 col-md-4 col-lg">
+          <div class="card card-day h-100 text-center border-0 shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title mb-1">${d.day} <small class="text-muted">${d.date}</small></h5>
+              <div class="display-4">${d.icon}</div>
+              <p class="mb-1">${d.cond}</p>
+              <p class="mb-1"><strong>${d.min}°</strong> / ${d.max}°</p>
+              ${d.rain ? `<span class="badge badge-rain">Lluvia ${d.rain}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  function renderPrecipTable(records) {
+    const tbody = document.getElementById("precip-table");
+    tbody.innerHTML = '';
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center">Sin registros recientes</td></tr>';
+      return;
     }
+    records.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td><strong>${r.datetime.split(" ")[1]}</strong><br><small>${r.datetime.split(" ")[0]}</small></td>
+          <td>${r.cond}</td>
+          <td><strong>${r.rain} mm</strong></td>
+          <td><small>${r.source}</small></td>
+        </tr>`;
+    });
+  }
 
-    // === INIT ===
-    window.onload = () => {
-      loadData();
-      updateSMNImage();
-      updateTime();
-      setInterval(updateTime, 1000);
-      setInterval(updateSMNImage, 600000); // 10 min
-      setInterval(loadData, 1800000); // 30 min
+  // === IMAGEN SMN DINÁMICA ===
+  function updateSMNImage() {
+    const now = new Date();
+    const pad = n => n.toString().padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const mm = pad(now.getMonth() + 1);
+    const dd = pad(now.getDate());
+    const minutes = now.getMinutes();
+    let targetMin, hh;
+    if (minutes < 20) {
+      // Hora anterior + 50
+      const prevHour = new Date(now.getTime() - 60 * 60 * 1000);
+      hh = pad(prevHour.getHours());
+      targetMin = 50;
+    } else if (minutes < 50) {
+      hh = pad(now.getHours());
+      targetMin = 20;
+    } else {
+      hh = pad(now.getHours());
+      targetMin = 50;
+    }
+    const filename = `TOP_C13_CEN_ALTA_${yyyy}${mm}${dd}_${hh}${targetMin}20Z.jpg`;
+    const url = `https://estaticos.smn.gob.ar/vmsr/satelite/${filename}`;
+    const img = document.getElementById("smn-img");
+    img.src = url + '?t=' + Date.now();
+    img.onerror = () => { 
+      img.src = "https://estaticos.smn.gob.ar/vmsr/satelite/TOP_C13_CEN_ALTA_20251111_155020Z.jpg"; 
     };
-  </script>
+  }
+
+  // === RELOJ ===
+  function updateTime() {
+    const now = new Date();
+    document.getElementById("current-time").textContent = now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+    document.getElementById("update-time").textContent = now.toLocaleTimeString('es-AR');
+  }
+
+  // === INIT ===
+  window.onload = () => {
+    loadData();
+    updateSMNImage();
+    updateTime();
+    setInterval(updateTime, 1000);
+    setInterval(updateSMNImage, 600000); // 10 min
+    setInterval(loadData, 900000); // 15 min
+  };
+</script>
 
 </body>
 
 </html>
+
 
 
