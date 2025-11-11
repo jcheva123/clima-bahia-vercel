@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pronóstico Bahía Blanca</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; color: #333; }
+    .header { background: linear-gradient(135deg, #1e90ff, #00bfff); color: white; padding: 1.5rem 0; }
+    .card-day { transition: transform 0.2s; }
+    .card-day:hover { transform: translateY(-5px); }
+    .sat-img { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .table-precip { font-size: 0.9rem; }
+    .chart-container { position: relative; height: 400px; }
+    .footer { background: #343a40; color: #ccc; padding: 1rem 0; font-size: 0.85rem; }
+    .badge-rain { background: #17a2b8; }
+    .loading { text-align: center; padding: 2rem; }
+    @media (max-width: 768px) {
+      .sat-row { flex-direction: column; }
+      .sat-img { margin-bottom: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header text-center">
+    <h1 class="mb-0">Pronóstico Bahía Blanca</h1>
+    <p class="mb-0">Provincia de Buenos Aires | <span id="current-time"></span></p>
+  </div>
+
+  <div class="container my-4">
+
+    <!-- PRONÓSTICO 7 DÍAS -->
+    <h3 class="mb-3">Pronóstico extendido</h3>
+    <div class="row g-3 mb-5" id="forecast-container">
+      <div class="loading">Cargando pronóstico...</div>
+    </div>
+
+    <!-- IMÁGENES SATELITALES -->
+    <h3 class="mb-3">Imágenes satelitales en vivo</h3>
+    <div class="row sat-row g-4 mb-5">
+      <div class="col-md-6">
+        <div class="text-center">
+          <h5>Topes Nubosos (SMN)</h5>
+          <img id="smn-img" class="img-fluid sat-img" alt="Topes nubosos actuales" />
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="text-center">
+          <h5>Animación Masas de Aire (GOES-19)</h5>
+          <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/AirMass/GOES19-SSA-AirMass-900x540.gif" 
+               class="img-fluid sat-img" alt="GOES-19 AirMass loop" />
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTRO DE PRECIPITACIONES -->
+    <h3 class="mb-3">Registro de Precipitaciones</h3>
+
+    <!-- RESUMEN ACUMULADOS -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center bg-info text-white">
+          <div class="card-body">
+            <h5>Hoy</h5>
+            <h3 id="today-rain">—</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+          <div class="card-body">
+            <h5>Mes (Nov)</h5>
+            <h3 id="month-rain">—</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center bg-success text-white">
+          <div class="card-body">
+            <h5>Media Hist. Nov</h5>
+            <h3 id="hist-nov">—</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center bg-dark text-white">
+          <div class="card-body">
+            <h5>Año 2025</h5>
+            <h3 id="year-rain">—</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA DE REGISTROS -->
+    <div class="table-responsive mb-4">
+      <table class="table table-precip table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Fecha/Hora</th>
+            <th>Condición</th>
+            <th>Lluvia (mm)</th>
+            <th>Fuente</th>
+          </tr>
+        </thead>
+        <tbody id="precip-table">
+          <tr><td colspan="4" class="text-center">Cargando registros...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- GRÁFICO MENSUAL -->
+    <h5>Precipitaciones por mes (2025)</h5>
+    <div class="chart-container mb-5">
+      <canvas id="rainChart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer text-center">
+    <p>
+      Datos: <a href="https://x.com/meteobahia" target="_blank" class="text-light">@meteobahia</a> |
+      <a href="https://www.lanueva.com/servicios/pronostico" target="_blank" class="text-light">La Nueva</a> |
+      SMN | NOAA<br>
+      Desarrollado por <a href="https://x.com/JuanChevalier" target="_blank" class="text-light">@JuanChevalier</a> | 
+      Actualizado: <span id="update-time"></span>
+    </p>
+  </footer>
+
+  <script>
+    // === CARGAR DATOS DEL BACKEND ===
+    async function loadData() {
+      try {
+        const res = await fetch('/api/data');
+        if (!res.ok) throw new Error('Error en API');
+        const data = await res.json();
+
+        renderForecast(data.forecast);
+        document.getElementById('today-rain').textContent = data.summaries.today;
+        document.getElementById('month-rain').textContent = data.summaries.month;
+        document.getElementById('hist-nov').textContent = data.summaries.historicalNov;
+        document.getElementById('year-rain').textContent = data.summaries.yearly;
+        renderPrecipTable(data.precipRecords);
+        renderChart(data.monthlyRain);
+      } catch (err) {
+        console.error('Error:', err);
+        document.getElementById('forecast-container').innerHTML = '<div class="alert alert-danger">Error al cargar datos. Intenta recargar.</div>';
+      }
+    }
+
+    // === RENDER FUNCTIONS ===
+    function renderForecast(forecast) {
+      const container = document.getElementById("forecast-container");
+      container.innerHTML = '';
+      forecast.forEach(d => {
+        container.innerHTML += `
+          <div class="col-12 col-sm-6 col-md-4 col-lg">
+            <div class="card card-day h-100 text-center border-0 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title mb-1">${d.day} <small class="text-muted">${d.date}</small></h5>
+                <div class="display-4">${d.icon}</div>
+                <p class="mb-1">${d.cond}</p>
+                <p class="mb-1"><strong>${d.min}°</strong> / ${d.max}°</p>
+                ${d.rain ? `<span class="badge badge-rain">Lluvia ${d.rain}</span>` : ''}
+              </div>
+            </div>
+          </div>`;
+      });
+    }
+
+    function renderPrecipTable(records) {
+      const tbody = document.getElementById("precip-table");
+      tbody.innerHTML = '';
+      if (records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Sin registros</td></tr>';
+        return;
+      }
+      records.forEach(r => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${r.datetime.split(" ")[1]}</strong><br><small>${r.datetime.split(" ")[0]}</small></td>
+            <td>${r.cond}</td>
+            <td><strong>${r.rain} mm</strong></td>
+            <td><small>${r.source}</small></td>
+          </tr>`;
+      });
+    }
+
+    function renderChart(monthlyRain) {
+      const ctx = document.getElementById('rainChart').getContext('2d');
+      if (window.myChart) window.myChart.destroy();
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: monthlyRain.map(m => m.month),
+          datasets: [{
+            label: 'Precipitación (mm)',
+            data: monthlyRain.map(m => m.mm),
+            backgroundColor: '#17a2b8',
+            borderColor: '#117a8b',
+            borderWidth: 1
+          }, {
+            label: 'Media Histórica Nov',
+            data: monthlyRain.map((_, i) => i === 10 ? 57.2 : null),
+            type: 'line',
+            borderColor: '#dc3545',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, title: { display: true, text: 'Milímetros (mm)' } } },
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    // === IMAGEN SMN DINÁMICA ===
+    function updateSMNImage() {
+      const now = new Date();
+      const pad = n => n.toString().padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const mm = pad(now.getMonth() + 1);
+      const dd = pad(now.getDate());
+      const hh = pad(now.getHours());
+      const min = pad(Math.floor(now.getMinutes() / 10) * 10);
+      const filename = `TOP_C13_CEN_ALTA_${yyyy}${mm}${dd}_${hh}${min}00Z.jpg`;
+      const url = `https://estaticos.smn.gob.ar/vmsr/satelite/${filename}`;
+      const img = document.getElementById("smn-img");
+      img.src = url + '?t=' + Date.now();
+      img.onerror = () => { img.src = "https://estaticos.smn.gob.ar/vmsr/satelite/TOP_C13_CEN_ALTA_20251111_144020Z.jpg"; };
+    }
+
+    // === RELOJ ===
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("current-time").textContent = now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+      document.getElementById("update-time").textContent = now.toLocaleTimeString('es-AR');
+    }
+
+    // === INIT ===
+    window.onload = () => {
+      loadData();
+      updateSMNImage();
+      updateTime();
+      setInterval(updateTime, 1000);
+      setInterval(updateSMNImage, 600000); // 10 min
+      setInterval(loadData, 1800000); // 30 min
+    };
+  </script>
+
+</body>
+</html>
