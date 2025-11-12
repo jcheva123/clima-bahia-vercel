@@ -1,15 +1,14 @@
 module.exports = async (req, res) => {
   try {
-    // DATOS REALES (12/11/2025)
     const laNuevaData = {
       forecast: [
-        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: null },
-        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: "0%" },
-        { day: "Viernes", date: "14/11", min: 17, max: 34, cond: "Templado a caluroso", icon: "Partly cloudy", rain: "10%" },
-        { day: "Sábado", date: "15/11", min: 23, max: 32, cond: "Cálido e inestable", icon: "Storm", rain: "50%" },
-        { day: "Domingo", date: "16/11", min: 20, max: 30, cond: "Templado con lluvias", icon: "Rain", rain: "60%" },
-        { day: "Lunes", date: "17/11", min: 18, max: 28, cond: "Mejora gradual", icon: "Cloudy", rain: "30%" },
-        { day: "Martes", date: "18/11", min: 16, max: 27, cond: "Variable", icon: "Partly cloudy", rain: "20%" }
+        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Soleado", rain: null },
+        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "Soleado", rain: "0%" },
+        { day: "Viernes", date: "14/11", min: 17, max: 34, cond: "Templado a caluroso", icon: "Parcialmente nublado", rain: "10%" },
+        { day: "Sábado", date: "15/11", min: 23, max: 32, cond: "Cálido e inestable", icon: "Tormenta", rain: "50%" },
+        { day: "Domingo", date: "16/11", min: 20, max: 30, cond: "Templado con lluvias", icon: "Lluvia", rain: "60%" },
+        { day: "Lunes", date: "17/11", min: 18, max: 28, cond: "Mejora gradual", icon: "Nublado", rain: "30%" },
+        { day: "Martes", date: "18/11", min: 16, max: 27, cond: "Variable", icon: "Parcialmente nublado", rain: "20%" }
       ],
       precip: {
         monthly_mm: 20,
@@ -23,12 +22,7 @@ module.exports = async (req, res) => {
       { datetime: "2025-11-12 01:25", cond: "Despejado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-12 00:25", cond: "Mayormente nublado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-11 23:25", cond: "Mayormente nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 22:25", cond: "Algo nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 21:20", cond: "Algo nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 20:25", cond: "Parcialmente nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 19:20", cond: "Despejado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 18:20", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 17:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" }
+      { datetime: "2025-11-11 22:25", cond: "Algo nublado", rain: 13.8, source: "@meteobahia" }
     ];
 
     const todayStr = new Date().toISOString().split('T')[0];
