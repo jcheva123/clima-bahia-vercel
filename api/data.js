@@ -2,8 +2,8 @@ module.exports = async (req, res) => {
   try {
     const laNuevaData = {
       forecast: [
-        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Soleado", rain: null },
-        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "Soleado", rain: "0%" },
+        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: null },
+        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: "0%" },
         { day: "Viernes", date: "14/11", min: 17, max: 34, cond: "Templado a caluroso", icon: "Parcialmente nublado", rain: "10%" },
         { day: "Sábado", date: "15/11", min: 23, max: 32, cond: "Cálido e inestable", icon: "Tormenta", rain: "50%" },
         { day: "Domingo", date: "16/11", min: 20, max: 30, cond: "Templado con lluvias", icon: "Lluvia", rain: "60%" },
@@ -30,14 +30,11 @@ module.exports = async (req, res) => {
     const todayRain = todayPosts.length > 0 ? Math.max(...todayPosts.map(p => p.rain)) : 0;
     const monthRain = laNuevaData.precip.monthly_mm + todayRain;
 
-    let todayLabel = "";
-    if (todayPosts.length > 0) {
-      const lastToday = todayPosts.sort((a,b) => new Date(b.datetime) - new Date(a.datetime))[0];
-      todayLabel = `${todayRain} mm (${lastToday.datetime.split(' ')[1]})`;
-    } else {
+    // Solo el valor SIN hora
+    let todayLabel = `${todayRain} mm`;
+    if (todayPosts.length === 0) {
       const lastPost = meteobahiaPosts[0];
-      const lastDate = lastPost.datetime.split(' ')[0].split('-').slice(1).join('/');
-      todayLabel = `${lastPost.rain} mm (${lastDate})`;
+      todayLabel = `${lastPost.rain} mm`;
     }
 
     const recentRecords = meteobahiaPosts
