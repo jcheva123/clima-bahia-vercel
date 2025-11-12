@@ -30,7 +30,6 @@ module.exports = async (req, res) => {
     const todayRain = todayPosts.length > 0 ? Math.max(...todayPosts.map(p => p.rain)) : 0;
     const monthRain = laNuevaData.precip.monthly_mm + todayRain;
 
-    // Solo el valor SIN hora
     let todayLabel = `${todayRain} mm`;
     if (todayPosts.length === 0) {
       const lastPost = meteobahiaPosts[0];
