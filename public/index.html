@@ -90,12 +90,23 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
       background: #e9ecef; 
     }
-    .goes-img { 
-      width: 900px; 
-      height: auto; 
-      margin-left: -220px; 
-      clip-path: inset(0 380px 0 220px); 
-      display: block; 
+
+    /* RECORTE SMN: 7200x4320 → centro móvil */
+    .smn-crop {
+      width: 100%;
+      height: 200px;
+      overflow: hidden;
+      position: relative;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .smn-crop img {
+      position: absolute;
+      left: -1800px;   /* recorta 1800px izquierda */
+      top: -1200px;    /* recorta 1200px arriba */
+      width: 7200px;
+      height: 4320px;
+      object-fit: cover;
     }
 
     .precip-summary { 
@@ -174,17 +185,18 @@
 
   <!-- SATÉLITES -->
   <div class="sat-section">
-    <div class="sat-title">Topes Nubosos (SMN)</div>
-    <img id="smn-img" 
-         src="https://estaticos.smn.gob.ar/vmsr/satelite/TOP_C13_CEN_ALTA_20251112_111020Z.jpg" 
-         class="img-fluid sat-img w-100" loading="lazy" alt="SMN Topes Nubosos" />
+    <div class="sat-title">Topes Nubosos (SMN) – Recortado</div>
+    <div class="smn-crop">
+      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/latest.jpg" 
+           alt="SMN Topes Nubosos" loading="lazy" />
+    </div>
   </div>
 
   <div class="sat-section">
-    <div class="sat-title">Masas de Aire (GOES-19) – Centro</div>
+    <div class="sat-title">Masas de Aire (GOES-19) – Animado</div>
     <div class="goes-container">
-      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/GOES19-SSA-11-900x540.gif" 
-           class="goes-img" loading="lazy" alt="GOES-19 Centro">
+      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/AirMass/GOES19-SSA-AirMass-900x540.gif" 
+           class="img-fluid w-100" loading="lazy" alt="GOES-19 AirMass">
     </div>
   </div>
 
@@ -257,16 +269,16 @@
         if (container) {
           container.innerHTML = '';
           const icons = {
-            "Sunny": "Sunny",
-            "Partly cloudy": "Partly cloudy",
-            "Storm": "Storm",
-            "Rain": "Rain",
-            "Cloudy": "Cloudy"
+            "Soleado": "Soleado",
+            "Parcialmente nublado": "Parcialmente nublado",
+            "Tormenta": "Tormenta",
+            "Lluvia": "Lluvia",
+            "Nublado": "Nublado"
           };
           future.forEach(d => {
             container.innerHTML += `
               <div class="day-small">
-                <div class="icon">${icons[d.icon] || "Sunny"}</div>
+                <div class="icon">${icons[d.icon] || "Soleado"}</div>
                 <div>${d.day.slice(0,3)}</div>
                 <div><strong>${d.min}°</strong>/${d.max}°</div>
               </div>`;
@@ -308,36 +320,6 @@
       }
     }
 
-    function updateSMNImage() {
-      const now = new Date();
-      const pad = n => n.toString().padStart(2, '0');
-      const yyyy = now.getFullYear();
-      const mm = pad(now.getMonth() + 1);
-      const dd = pad(now.getDate());
-      const hh = pad(now.getHours());
-      const min = now.getMinutes();
-
-      let targetHour = hh;
-      let targetMin = '20';
-      if (min < 20) {
-        const prev = new Date(now.getTime() - 3600000);
-        targetHour = pad(prev.getHours());
-        targetMin = '50';
-      } else if (min < 50) {
-        targetMin = '20';
-      } else {
-        targetMin = '50';
-      }
-
-      const filename = `TOP_C13_CEN_ALTA_${yyyy}${mm}${dd}_${targetHour}${targetMin}20Z.jpg`;
-      const url = `https://estaticos.smn.gob.ar/vmsr/satelite/${filename}`;
-      
-      const img = document.getElementById("smn-img");
-      if (img) {
-        img.src = url + '?t=' + Date.now();
-      }
-    }
-
     function updateTime() {
       const now = new Date();
       const el = document.getElementById("update-time");
@@ -346,14 +328,8 @@
 
     window.onload = () => {
       loadData();
-      updateSMNImage();
       updateTime();
       setInterval(updateTime, 1000);
-      setInterval(updateSMNImage, 600000);
-      setInterval(() => {
-        const img = document.querySelector('.goes-img');
-        if (img) img.src = img.src.split('?')[0] + '?t=' + Date.now();
-      }, 600000);
       setInterval(loadData, 900000);
     };
   </script>
