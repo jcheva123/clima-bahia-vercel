@@ -2,13 +2,13 @@ module.exports = async (req, res) => {
   try {
     const laNuevaData = {
       forecast: [
-        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: null },
-        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: "0%" },
-        { day: "Viernes", date: "14/11", min: 17, max: 34, cond: "Templado a caluroso", icon: "Parcialmente nublado", rain: "10%" },
-        { day: "Sábado", date: "15/11", min: 23, max: 32, cond: "Cálido e inestable", icon: "Tormenta", rain: "50%" },
-        { day: "Domingo", date: "16/11", min: 20, max: 30, cond: "Templado con lluvias", icon: "Lluvia", rain: "60%" },
-        { day: "Lunes", date: "17/11", min: 18, max: 28, cond: "Mejora gradual", icon: "Nublado", rain: "30%" },
-        { day: "Martes", date: "18/11", min: 16, max: 27, cond: "Variable", icon: "Parcialmente nublado", rain: "20%" }
+        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "☀️", rain: null },
+        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "☀️", rain: "0%" },
+        { day: "Viernes", date: "14/11", min: 17, max: 34, cond: "Templado a caluroso", icon: "⛅", rain: "10%" },
+        { day: "Sábado", date: "15/11", min: 23, max: 32, cond: "Cálido e inestable", icon: "⛈️", rain: "50%" },
+        { day: "Domingo", date: "16/11", min: 20, max: 30, cond: "Templado con lluvias", icon: "🌧️", rain: "60%" },
+        { day: "Lunes", date: "17/11", min: 18, max: 28, cond: "Mejora gradual", icon: "☁️", rain: "30%" },
+        { day: "Martes", date: "18/11", min: 16, max: 27, cond: "Variable", icon: "⛅", rain: "20%" }
       ],
       precip: {
         monthly_mm: 20,
