@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
     const todayStr = new Date().toISOString().split('T')[0];
     const todayPosts = meteobahiaPosts.filter(p => p.datetime.startsWith(todayStr));
     const todayRain = todayPosts.length > 0 ? Math.max(...todayPosts.map(p => p.rain)) : 0;
-    const monthRain = laNuevaData.precip.monthly_mm + todayRain;
+    const monthRain = laNuevaData.precip.monthly_mm; // Solo La Nueva, sin sumar todayRain
 
     let todayLabel = `${todayRain} mm`;
     if (todayPosts.length === 0) {
@@ -54,3 +54,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: 'Error' });
   }
 };
+
