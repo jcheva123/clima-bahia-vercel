@@ -1,5 +1,6 @@
 module.exports = async (req, res) => {
   try {
+    // DATOS REALES (12/11/2025)
     const laNuevaData = {
       forecast: [
         { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: null },
@@ -27,17 +28,7 @@ module.exports = async (req, res) => {
       { datetime: "2025-11-11 20:25", cond: "Parcialmente nublado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-11 19:20", cond: "Despejado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-11 18:20", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 17:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 16:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 15:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
-      { datetime: "2025-11-11 14:20", cond: "Nublado", rain: 12.7, source: "@meteobahia" },
-      { datetime: "2025-11-11 13:25", cond: "Mayormente nublado", rain: 7.0, source: "@meteobahia" },
-      { datetime: "2025-11-11 12:25", cond: "Parcialmente nublado", rain: 4.2, source: "@meteobahia" },
-      { datetime: "2025-11-08 02:25", cond: "Nublado", rain: 0.5, source: "@meteobahia" },
-      { datetime: "2025-11-08 01:20", cond: "Parcialmente nublado", rain: 0.5, source: "@meteobahia" },
-      { datetime: "2025-11-08 00:25", cond: "Parcialmente nublado", rain: 0.5, source: "@meteobahia" },
-      { datetime: "2025-11-07 23:20", cond: "Nublado", rain: 0.5, source: "@meteobahia" },
-      { datetime: "2025-11-04 02:25", cond: "Lluvia", rain: 2.1, source: "@meteobahia" }
+      { datetime: "2025-11-11 17:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" }
     ];
 
     const todayStr = new Date().toISOString().split('T')[0];
@@ -60,7 +51,6 @@ module.exports = async (req, res) => {
       .slice(0, 5);
 
     res.json({
-      timestamp: new Date().toISOString(),
       forecast: laNuevaData.forecast,
       precipRecords: recentRecords,
       summaries: {
@@ -71,6 +61,6 @@ module.exports = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: 'API error' });
+    res.status(500).json({ error: 'Error' });
   }
 };
