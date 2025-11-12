@@ -89,13 +89,12 @@
       overflow: hidden; 
       box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
       background: #e9ecef; 
-      height: 300px; /* Altura fija para móviles */
+      height: 300px;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
-    /* ZOOM 50% AL CENTRO EN latest.jpg */
     .smn-zoom {
       width: 1800px;  /* 900 * 2 */
       height: 1080px; /* 540 * 2 */
@@ -104,7 +103,6 @@
       object-fit: contain;
     }
 
-    /* GIF ANIMADO 900x540 */
     .goes-img {
       width: 900px;
       height: 540px;
@@ -271,7 +269,7 @@
         if (container) {
           container.innerHTML = '';
           const icons = {
-            "Soleado": "Soleado",
+            "Soleado": "Sunny",
             "Parcialmente nublado": "Parcialmente nublado",
             "Tormenta": "Tormenta",
             "Lluvia": "Lluvia",
@@ -280,7 +278,7 @@
           future.forEach(d => {
             container.innerHTML += `
               <div class="day-small">
-                <div class="icon">${icons[d.icon] || "Soleado"}</div>
+                <div class="icon">${icons[d.icon] || "Sunny"}</div>
                 <div>${d.day.slice(0,3)}</div>
                 <div><strong>${d.min}°</strong>/${d.max}°</div>
               </div>`;
@@ -291,7 +289,8 @@
           const el = document.getElementById(id);
           if (el) el.textContent = value;
         };
-        setText('today-rain', data.summaries.today);
+        // Solo el valor, SIN hora entre paréntesis
+        setText('today-rain', data.summaries.today.replace(/ \(.+\)/, ''));
         setText('month-rain', data.summaries.month);
         setText('hist-nov', data.summaries.historicalNov);
         setText('year-rain', data.summaries.yearly);
@@ -338,4 +337,3 @@
 
 </body>
 </html>
-
