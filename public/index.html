@@ -91,22 +91,13 @@
       background: #e9ecef; 
     }
 
-    /* RECORTE SMN: 7200x4320 → centro móvil */
-    .smn-crop {
+    /* IMÁGENES 900x540 */
+    .sat-img img, .goes-container img {
       width: 100%;
-      height: 200px;
-      overflow: hidden;
-      position: relative;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .smn-crop img {
-      position: absolute;
-      left: -1800px;   /* recorta 1800px izquierda */
-      top: -1200px;    /* recorta 1200px arriba */
-      width: 7200px;
-      height: 4320px;
-      object-fit: cover;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      display: block;
     }
 
     .precip-summary { 
@@ -185,10 +176,10 @@
 
   <!-- SATÉLITES -->
   <div class="sat-section">
-    <div class="sat-title">Topes Nubosos (SMN) – Recortado</div>
-    <div class="smn-crop">
+    <div class="sat-title">Topes Nubosos (SMN) – 900x540</div>
+    <div class="sat-img">
       <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/latest.jpg" 
-           alt="SMN Topes Nubosos" loading="lazy" />
+           width="900" height="540" loading="lazy" alt="SMN Topes Nubosos" />
     </div>
   </div>
 
@@ -196,7 +187,7 @@
     <div class="sat-title">Masas de Aire (GOES-19) – Animado</div>
     <div class="goes-container">
       <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/AirMass/GOES19-SSA-AirMass-900x540.gif" 
-           class="img-fluid w-100" loading="lazy" alt="GOES-19 AirMass">
+           width="900" height="540" loading="lazy" alt="GOES-19 AirMass">
     </div>
   </div>
 
