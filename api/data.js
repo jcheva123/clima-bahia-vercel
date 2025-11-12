@@ -1,29 +1,37 @@
 module.exports = async (req, res) => {
   try {
-    // === DATOS SCRAPEADOS EN VIVO (11/11/2025 14:00 -03) ===
-    
-    // Fuente: La Nueva (pronóstico + acumulados)
+    // DATOS FRESQUÍSIMOS SCRAPEADOS (12/11/2025 13:00 -03)
     const laNuevaData = {
       forecast: [
-        { day: "Martes", date: "11/11", min: 16, max: 21, cond: "Nublado", icon: "Nublado", rain: null },
-        { day: "Miércoles", date: "12/11", min: 14, max: 27, cond: "Fresco y soleado a templado", icon: "Soleado", rain: "0%" },
-        { day: "Jueves", date: "13/11", min: 14, max: 31, cond: "Fresco a cálido", icon: "Parcialmente nublado", rain: "0%" },
-        { day: "Viernes", date: "14/11", min: 20, max: 33, cond: "Templado a caluroso", icon: "Calor", rain: "10%" },
-        // Proyecciones extendidas (AccuWeather)
-        { day: "Sábado", date: "15/11", min: 18, max: 28, cond: "Tormentas aisladas", icon: "Tormenta", rain: "60%" },
-        { day: "Domingo", date: "16/11", min: 16, max: 25, cond: "Lluvias dispersas", icon: "Lluvia", rain: "70%" },
-        { day: "Lunes", date: "17/11", min: 15, max: 23, cond: "Nublado con mejoras", icon: "Nublado", rain: "30%" }
+        { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "☀️", rain: null },
+        { day: "Jueves", date: "13/11", min: 15, max: 31, cond: "Fresco y soleado a cálido", icon: "☀️", rain: "0%" },
+        { day: "Viernes", date: "14/11", min: 17, max: 34, cond: "Templado a caluroso", icon: "🌤️", rain: "10%" },
+        { day: "Sábado", date: "15/11", min: 23, max: 32, cond: "Cálido e inestable", icon: "⛈️", rain: "50%" },
+        // Proyecciones extendidas
+        { day: "Domingo", date: "16/11", min: 20, max: 30, cond: "Templado con lluvias", icon: "🌧️", rain: "60%" },
+        { day: "Lunes", date: "17/11", min: 18, max: 28, cond: "Mejora gradual", icon: "☁️", rain: "30%" },
+        { day: "Martes", date: "18/11", min: 16, max: 27, cond: "Variable", icon: "⛅", rain: "20%" }
       ],
       precip: {
-        until_yesterday: "Sin Precipitaciones",
-        monthly_mm: 8,
+        until_yesterday: "20 mm",
+        monthly_mm: 20,
         historical_nov: 57.2,
-        yearly_mm: 986.1
+        yearly_mm: 998.1
       }
     };
 
-    // Fuente: @meteobahia (posts con Lluv: – últimos 13)
+    // @meteobahia posts frescos (Lluv: – últimos 20)
     const meteobahiaPosts = [
+      { datetime: "2025-11-12 02:20", cond: "Despejado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-12 01:25", cond: "Despejado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-12 00:25", cond: "Mayormente nublado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 23:25", cond: "Mayormente nublado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 22:25", cond: "Algo nublado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 21:20", cond: "Algo nublado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 20:25", cond: "Parcialmente nublado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 19:20", cond: "Despejado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 18:20", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
+      { datetime: "2025-11-11 17:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-11 16:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-11 15:25", cond: "Nublado", rain: 13.8, source: "@meteobahia" },
       { datetime: "2025-11-11 14:20", cond: "Nublado", rain: 12.7, source: "@meteobahia" },
@@ -33,35 +41,31 @@ module.exports = async (req, res) => {
       { datetime: "2025-11-08 01:20", cond: "Parcialmente nublado", rain: 0.5, source: "@meteobahia" },
       { datetime: "2025-11-08 00:25", cond: "Parcialmente nublado", rain: 0.5, source: "@meteobahia" },
       { datetime: "2025-11-07 23:20", cond: "Nublado", rain: 0.5, source: "@meteobahia" },
-      { datetime: "2025-11-04 02:25", cond: "Lluvia", rain: 2.1, source: "@meteobahia" },
-      { datetime: "2025-11-04 01:25", cond: "Lluvia", rain: 2.1, source: "@meteobahia" },
-      { datetime: "2025-11-04 00:25", cond: "Lluvia", rain: 2.1, source: "@meteobahia" },
-      { datetime: "2025-11-03 23:25", cond: "Parcialmente nublado", rain: 2.1, source: "@meteobahia" }
+      { datetime: "2025-11-04 02:25", cond: "Lluvia", rain: 2.1, source: "@meteobahia" }
     ];
 
-    // === LÓGICA AUTOMÁTICA ===
-    const todayStr = new Date().toISOString().split('T')[0]; // "2025-11-11"
+    // LÓGICA AUTOMÁTICA
+    const todayStr = new Date().toISOString().split('T')[0]; // "2025-11-12"
     const todayPosts = meteobahiaPosts.filter(p => p.datetime.startsWith(todayStr));
     const todayRain = todayPosts.length > 0 ? Math.max(...todayPosts.map(p => p.rain)) : 0;
     const monthRain = laNuevaData.precip.monthly_mm + todayRain;
 
-    // Determinar "Hoy" o "Último registro"
+    // ÚLTIMO REGISTRO: Hora si hoy, dd/mm si anterior
     let todayLabel = "";
     if (todayPosts.length > 0) {
       const lastToday = todayPosts.sort((a,b) => new Date(b.datetime) - new Date(a.datetime))[0];
-      todayLabel = `${todayRain} mm (${lastToday.datetime.split(' ')[1]})`;
+      todayLabel = `${todayRain} mm (${lastToday.datetime.split(' ')[1]})`; // Hora
     } else {
       const lastPost = meteobahiaPosts[0];
-      const lastTime = lastPost.datetime.split(' ')[1];
-      todayLabel = `${lastPost.rain} mm (${lastTime})`;
+      const lastDate = lastPost.datetime.split(' ')[0].split('-').slice(1).join('/'); // "11/11"
+      todayLabel = `${lastPost.rain} mm (${lastDate})`;
     }
 
-    // Solo 5 últimos registros (más recientes primero)
+    // 5 ÚLTIMOS (ordenados descendente)
     const recentRecords = meteobahiaPosts
       .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
       .slice(0, 5);
 
-    // === RESPUESTA FINAL ===
     res.json({
       timestamp: new Date().toISOString(),
       forecast: laNuevaData.forecast,
@@ -73,9 +77,8 @@ module.exports = async (req, res) => {
         yearly: `${laNuevaData.precip.yearly_mm} mm`
       }
     });
-
   } catch (err) {
-    console.error('Error en API:', err);
-    res.status(500).json({ error: 'Error interno' });
+    console.error('Error:', err);
+    res.status(500).json({ error: 'API error' });
   }
 };
