@@ -28,7 +28,6 @@
       font-weight: 600; 
     }
 
-    /* CLIMA HOY */
     .today-card { 
       background: white; 
       border-radius: 16px; 
@@ -52,7 +51,6 @@
       font-weight: 600; 
     }
 
-    /* PRONÓSTICO PEQUEÑO */
     .forecast-small { 
       display: flex; 
       overflow-x: auto; 
@@ -77,7 +75,6 @@
       margin-bottom: 0.25rem; 
     }
 
-    /* SATÉLITES */
     .sat-section { 
       margin-bottom: 1.5rem; 
     }
@@ -101,7 +98,6 @@
       display: block; 
     }
 
-    /* PRECIPITACIONES */
     .precip-summary { 
       display: flex; 
       justify-content: space-around; 
@@ -129,7 +125,6 @@
       font-weight: 600; 
     }
 
-    /* TABLA */
     .table-container { 
       overflow-x: auto; 
       border-radius: 12px; 
@@ -148,7 +143,6 @@
       vertical-align: middle; 
     }
 
-    /* FOOTER */
     .footer { 
       text-align: center; 
       margin-top: 2rem; 
@@ -183,8 +177,7 @@
     <div class="sat-title">Topes Nubosos (SMN)</div>
     <img id="smn-img" 
          src="https://estaticos.smn.gob.ar/vmsr/satelite/TOP_C13_CEN_ALTA_20251112_111020Z.jpg" 
-         class="img-fluid sat-img w-100" loading="lazy" 
-         alt="SMN Topes Nubosos" />
+         class="img-fluid sat-img w-100" loading="lazy" alt="SMN Topes Nubosos" />
   </div>
 
   <div class="sat-section">
@@ -263,10 +256,17 @@
         const container = document.getElementById('forecast-small');
         if (container) {
           container.innerHTML = '';
+          const icons = {
+            "Sunny": "Sunny",
+            "Partly cloudy": "Partly cloudy",
+            "Storm": "Storm",
+            "Rain": "Rain",
+            "Cloudy": "Cloudy"
+          };
           future.forEach(d => {
             container.innerHTML += `
               <div class="day-small">
-                <div class="icon">${d.icon}</div>
+                <div class="icon">${icons[d.icon] || "Sunny"}</div>
                 <div>${d.day.slice(0,3)}</div>
                 <div><strong>${d.min}°</strong>/${d.max}°</div>
               </div>`;
