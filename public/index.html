@@ -5,182 +5,189 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clima Bahía Blanca</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
- <style>
-  * { box-sizing: border-box; }
-  body { 
-    font-family: system-ui, -apple-system, sans-serif; 
-    margin: 0; 
-    padding: 1rem; 
-    background: #121212; 
-    color: #e0e0e0; 
-  }
-  .header-mobile { 
-    text-align: center; 
-    margin-bottom: 1rem; 
-    background: #1e90ff; 
-    color: white; 
-    padding: 0.75rem; 
-    border-radius: 12px; 
-  }
-  .header-mobile h1 { 
-    margin: 0; 
-    font-size: 1.4rem; 
-    font-weight: 600; 
-  }
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      margin: 0; 
+      padding: 1rem; 
+      background: #121212; 
+      color: #e0e0e0; 
+    }
+    .header-mobile { 
+      text-align: center; 
+      margin-bottom: 1rem; 
+      background: #1e90ff; 
+      color: white; 
+      padding: 0.75rem; 
+      border-radius: 12px; 
+    }
+    .header-mobile h1 { 
+      margin: 0; 
+      font-size: 1.4rem; 
+      font-weight: 600; 
+    }
 
-  .today-card { 
-    background: #1e1e1e; 
-    border-radius: 16px; 
-    padding: 1.5rem; 
-    text-align: center; 
-    box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
-    margin-bottom: 1.5rem; 
-    border: 1px solid #333;
-  }
-  .today-icon { 
-    font-size: 3.5rem; 
-    margin-bottom: 0.5rem; 
-  }
-  .today-temps { 
-    font-size: 2.2rem; 
-    font-weight: 300; 
-  }
-  .today-temps .min { 
-    color: #aaa; 
-  }
-  .today-temps .max { 
-    font-weight: 600; 
-  }
+    .today-card { 
+      background: #1e1e1e; 
+      border-radius: 16px; 
+      padding: 1.5rem; 
+      text-align: center; 
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
+      margin-bottom: 1.5rem; 
+      border: 1px solid #333;
+    }
+    .today-icon { 
+      font-size: 3.5rem; 
+      margin-bottom: 0.5rem; 
+    }
+    .today-temps { 
+      font-size: 2.2rem; 
+      font-weight: 300; 
+    }
+    .today-temps .min { 
+      color: #aaa; 
+    }
+    .today-temps .max { 
+      font-weight: 600; 
+    }
+    .text-muted { 
+      color: #ccc !important; /* Color legible en dark theme */
+    }
+    .current-time { 
+      font-size: 1.2rem; 
+      color: #aaa; 
+      margin-top: 0.25rem; 
+    }
 
-  .forecast-small { 
-    display: flex; 
-    overflow-x: auto; 
-    gap: 0.75rem; 
-    padding-bottom: 0.5rem; 
-    margin-bottom: 1.5rem; 
-    scrollbar-width: thin;
-    scrollbar-color: #444 #1e1e1e;
-  }
-  .day-small { 
-    min-width: 65px; 
-    text-align: center; 
-    background: #1e1e1e; 
-    padding: 0.75rem 0.5rem; 
-    border-radius: 12px; 
-    font-size: 0.85rem; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-    flex-shrink: 0; 
-    border: 1px solid #333;
-  }
-  .day-small .icon { 
-    font-size: 1.4rem; 
-    display: block; 
-    margin-bottom: 0.25rem; 
-  }
+    .forecast-small { 
+      display: flex; 
+      overflow-x: auto; 
+      gap: 0.75rem; 
+      padding-bottom: 0.5rem; 
+      margin-bottom: 1.5rem; 
+      scrollbar-width: thin;
+      scrollbar-color: #444 #1e1e1e;
+    }
+    .day-small { 
+      min-width: 65px; 
+      text-align: center; 
+      background: #1e1e1e; 
+      padding: 0.75rem 0.5rem; 
+      border-radius: 12px; 
+      font-size: 0.85rem; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      flex-shrink: 0; 
+      border: 1px solid #333;
+    }
+    .day-small .icon { 
+      font-size: 1.4rem; 
+      display: block; 
+      margin-bottom: 0.25rem; 
+    }
 
-  .sat-section { 
-    margin-bottom: 1.5rem; 
-  }
-  .sat-title { 
-    font-size: 1rem; 
-    font-weight: 600; 
-    margin-bottom: 0.5rem; 
-    color: #ccc; 
-  }
-  .sat-img, .goes-container { 
-    border-radius: 12px; 
-    overflow: hidden; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
-    background: #1a1a1a; 
-    height: 300px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid #333;
-  }
+    .sat-section { 
+      margin-bottom: 1.5rem; 
+    }
+    .sat-title { 
+      font-size: 1rem; 
+      font-weight: 600; 
+      margin-bottom: 0.5rem; 
+      color: #ccc; 
+    }
+    .sat-img, .goes-container { 
+      border-radius: 12px; 
+      overflow: hidden; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
+      background: #1a1a1a; 
+      height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #333;
+    }
 
-  .smn-zoom {
-    width: 1800px;
-    height: 1080px;
-    transform: scale(0.8);
-  transform-origin: 90% 20%;
+    .smn-zoom {
+      width: 1800px;
+      height: 1080px;
+      transform: scale(0.8);
+      transform-origin: 90% 20%;
+      object-fit: contain;
+    }
 
-    object-fit: contain;
-  }
+    .goes-img {
+      width: 900px;
+      height: 540px;
+      transform: scale(1.6);
+      transform-origin: 20% 60%;
+      object-fit: contain;
+    }
 
-  .goes-img {
-    width: 900px;
-    height: 540px;
-    transform: scale(1.6);
-  transform-origin: 20% 60%;
-    object-fit: contain;
-  }
+    .precip-summary { 
+      display: flex; 
+      justify-content: space-around; 
+      margin-bottom: 1rem; 
+      flex-wrap: wrap; 
+      gap: 0.5rem; 
+    }
+    .precip-card { 
+      background: #1e1e1e; 
+      padding: 0.75rem; 
+      border-radius: 12px; 
+      text-align: center; 
+      flex: 1; 
+      min-width: 80px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      border: 1px solid #333;
+    }
+    .precip-card h5 { 
+      margin: 0; 
+      font-size: 0.8rem; 
+      color: #aaa; 
+    }
+    .precip-card h3 { 
+      margin: 0.25rem 0 0; 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      color: #fff;
+    }
 
-  .precip-summary { 
-    display: flex; 
-    justify-content: space-around; 
-    margin-bottom: 1rem; 
-    flex-wrap: wrap; 
-    gap: 0.5rem; 
-  }
-  .precip-card { 
-    background: #1e1e1e; 
-    padding: 0.75rem; 
-    border-radius: 12px; 
-    text-align: center; 
-    flex: 1; 
-    min-width: 80px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-    border: 1px solid #333;
-  }
-  .precip-card h5 { 
-    margin: 0; 
-    font-size: 0.8rem; 
-    color: #aaa; 
-  }
-  .precip-card h3 { 
-    margin: 0.25rem 0 0; 
-    font-size: 1.1rem; 
-    font-weight: 600; 
-    color: #fff;
-  }
+    .table-container { 
+      overflow-x: auto; 
+      border-radius: 12px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      border: 1px solid #333;
+    }
+    .table { 
+      margin: 0; 
+      font-size: 0.85rem; 
+      background: #1e1e1e; 
+      color: #e0e0e0;
+    }
+    .table th { 
+      font-weight: 600; 
+      background: #252525; 
+      color: #ccc;
+    }
+    .table td { 
+      vertical-align: middle; 
+      border-color: #333;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #2a2a2a;
+    }
 
-  .table-container { 
-    overflow-x: auto; 
-    border-radius: 12px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-    border: 1px solid #333;
-  }
-  .table { 
-    margin: 0; 
-    font-size: 0.85rem; 
-    background: #1e1e1e; 
-    color: #e0e0e0;
-  }
-  .table th { 
-    font-weight: 600; 
-    background: #252525; 
-    color: #ccc;
-  }
-  .table td { 
-    vertical-align: middle; 
-    border-color: #333;
-  }
-  .table-hover tbody tr:hover {
-    background-color: #2a2a2a;
-  }
-
-  .footer { 
-    text-align: center; 
-    margin-top: 2rem; 
-    font-size: 0.75rem; 
-    color: #888; 
-  }
-  .footer a { 
-    color: #1e90ff; 
-    text-decoration: none; 
-  }
-</style>
+    .footer { 
+      text-align: center; 
+      margin-top: 2rem; 
+      font-size: 0.75rem; 
+      color: #888; 
+    }
+    .footer a { 
+      color: #1e90ff; 
+      text-decoration: none; 
+    }
+  </style>
 </head>
 <body>
 
@@ -194,13 +201,15 @@
       <span class="min">—</span>
       <strong class="mx-2 max">—</strong>
     </div>
-    <div class="text-muted">—</div>
+    <div class="text-muted" id="current-date">—</div>
+    <div class="current-time" id="current-time">HH:MM</div> <!-- Hora actual -->
   </div>
 
   <div class="forecast-small" id="forecast-small"></div>
 
   <!-- SATÉLITES -->
   <div class="sat-section">
+    <div class="sat-title">Topes Nubosos (SMN) – Zoom 50% Centro</div>
     <div class="sat-img">
       <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/latest.jpg" 
            class="smn-zoom" loading="lazy" alt="SMN Topes Nubosos" />
@@ -208,6 +217,7 @@
   </div>
 
   <div class="sat-section">
+    <div class="sat-title">Masas de Aire (GOES-19) – Animado</div>
     <div class="goes-container">
       <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/AirMass/GOES19-SSA-AirMass-900x540.gif" 
            class="goes-img" loading="lazy" alt="GOES-19 AirMass">
@@ -255,6 +265,7 @@
     Datos: <a href="https://x.com/meteobahia" target="_blank">@meteobahia</a> | 
     <a href="https://www.lanueva.com/servicios/pronostico" target="_blank">La Nueva</a> | 
     SMN | NOAA<br>
+    Por <a href="https://x.com/JuanChevalier" target="_blank">@JuanChevalier</a> | 
     <span id="update-time"></span>
   </div>
 
@@ -273,7 +284,7 @@
         const maxEl = todayCard.querySelector('.today-temps .max');
         if (minEl) minEl.textContent = `${today.min}°`;
         if (maxEl) maxEl.textContent = `${today.max}°`;
-        const dateEl = todayCard.querySelector('.text-muted');
+        const dateEl = document.getElementById('current-date');
         if (dateEl) dateEl.textContent = `${today.day} ${today.date}`;
       }
 
@@ -328,8 +339,10 @@
 
   function updateTime() {
     const now = new Date();
-    const el = document.getElementById("update-time");
-    if (el) el.textContent = now.toLocaleTimeString('es-AR');
+    const timeEl = document.getElementById("current-time");
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    const updateEl = document.getElementById("update-time");
+    if (updateEl) updateEl.textContent = now.toLocaleTimeString('es-AR');
   }
 
   window.onload = () => {
@@ -342,13 +355,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
