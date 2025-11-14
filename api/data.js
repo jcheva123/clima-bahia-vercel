@@ -1,9 +1,6 @@
-const fetch = require('node-fetch');
-const { Buffer } = require('buffer');
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
-    // === DATOS CLIMA (sin cambios) ===
+    // === DATOS CLIMA ===
     const laNuevaData = {
       forecast: [
         { day: "Miércoles", date: "12/11", min: 13, max: 26, cond: "Fresco y soleado a cálido", icon: "Sunny", rain: null },
@@ -44,7 +41,7 @@ module.exports = async (req, res) => {
       .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
       .slice(0, 5);
 
-    // === PROXY PARA RADAR (EVITA CORB) ===
+    // === PROXY PARA RADAR ===
     if (req.query.radar === 'latest') {
       const pad = n => n.toString().padStart(2, '0');
       const now = new Date();
@@ -61,23 +58,27 @@ module.exports = async (req, res) => {
       try {
         const response = await fetch(radarUrl);
         if (!response.ok) throw new Error('Radar no disponible');
-        const buffer = await response.buffer();
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Access-Control-Allow-Origin', '*');
         return res.send(buffer);
       } catch (err) {
-        // Fallback a imagen estática
+        // Fallback
         const fallbackUrl = 'https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_20251114_130223Z.png';
         const fallback = await fetch(fallbackUrl);
-        const buffer = await fallback.buffer();
+        const arrayBuffer = await fallback.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
         res.setHeader('Content-Type', 'image/png');
         return res.send(buffer);
       }
     }
 
-    // === RESPUESTA NORMAL ===
-    res.json({
+    // === RESPUESTA JSON ===
+    res.status(200).json({
       forecast: laNuevaData.forecast,
       precipRecords: recentRecords,
       summaries: {
@@ -88,6 +89,7 @@ module.exports = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ error: 'Error' });
+    console.error('API Error:', err);
+    res.status(500).json({ error: 'Error interno' });
   }
-};
+}
