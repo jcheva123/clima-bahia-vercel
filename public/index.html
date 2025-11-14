@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clima Bahía Blanca</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>Radar</text></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     * { box-sizing: border-box; }
@@ -29,165 +28,167 @@
       font-weight: 600; 
     }
 
-.today-card { 
-  background: #1e1e1e; 
-  border-radius: 16px; 
-  padding: 1.5rem; 
-  text-align: center; 
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
-  margin-bottom: 1.5rem; 
-  border: 1px solid #333;
-}
-.today-icon { 
-  font-size: 3.5rem; 
-  margin-bottom: 0.5rem; 
-}
-.today-temps { 
-  font-size: 2.2rem; 
-  font-weight: 300; 
-}
-.today-temps .min { 
-  color: #aaa; 
-}
-.today-temps .max { 
-  font-weight: 600; 
-}
-.text-muted { 
-  color: #ccc !important; /* Color legible en dark theme */
-}
-.current-time { 
-  font-size: 1.2rem; 
-  color: #aaa; 
-  margin-top: 0.25rem; 
-}
+    .today-card { 
+      background: #1e1e1e; 
+      border-radius: 16px; 
+      padding: 1.5rem; 
+      text-align: center; 
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
+      margin-bottom: 1.5rem; 
+      border: 1px solid #333;
+    }
+    .today-icon { 
+      font-size: 3.5rem; 
+      margin-bottom: 0.5rem; 
+    }
+    .today-temps { 
+      font-size: 2.2rem; 
+      font-weight: 300; 
+    }
+    .today-temps .min { 
+      color: #aaa; 
+    }
+    .today-temps .max { 
+      font-weight: 600; 
+    }
+    .text-muted { 
+      color: #ccc !important; /* Color legible en dark theme */
+    }
+    .current-time { 
+      font-size: 1.2rem; 
+      color: #aaa; 
+      margin-top: 0.25rem; 
+    }
 
-.forecast-small { 
-  display: flex; 
-  overflow-x: auto; 
-  gap: 0.75rem; 
-  padding-bottom: 0.5rem; 
-  margin-bottom: 1.5rem; 
-  scrollbar-width: thin;
-  scrollbar-color: #444 #1e1e1e;
-}
-.day-small { 
-  min-width: 65px; 
-  text-align: center; 
-  background: #1e1e1e; 
-  padding: 0.75rem 0.5rem; 
-  border-radius: 12px; 
-  font-size: 0.85rem; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-  flex-shrink: 0; 
-  border: 1px solid #333;
-}
-.day-small .icon { 
-  font-size: 1.4rem; 
-  display: block; 
-  margin-bottom: 0.25rem; 
-}
+    .forecast-small { 
+      display: flex; 
+      overflow-x: auto; 
+      gap: 0.75rem; 
+      padding-bottom: 0.5rem; 
+      margin-bottom: 1.5rem; 
+      scrollbar-width: thin;
+      scrollbar-color: #444 #1e1e1e;
+    }
+    .day-small { 
+      min-width: 65px; 
+      text-align: center; 
+      background: #1e1e1e; 
+      padding: 0.75rem 0.5rem; 
+      border-radius: 12px; 
+      font-size: 0.85rem; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      flex-shrink: 0; 
+      border: 1px solid #333;
+    }
+    .day-small .icon { 
+      font-size: 1.4rem; 
+      display: block; 
+      margin-bottom: 0.25rem; 
+    }
 
-.sat-section { 
-  margin-bottom: 1.5rem; 
-}
-.sat-title { 
-  font-size: 1rem; 
-  font-weight: 600; 
-  margin-bottom: 0.5rem; 
-  color: #ccc; 
-}
-.sat-img, .goes-container { 
-  border-radius: 12px; 
-  overflow: hidden; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
-  background: #1a1a1a; 
-  height: 300px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid #333;
-}
+    .sat-section { 
+      margin-bottom: 1.5rem; 
+    }
+    .sat-title { 
+      font-size: 1rem; 
+      font-weight: 600; 
+      margin-bottom: 0.5rem; 
+      color: #ccc; 
+    }
+    .sat-img, .goes-container { 
+      border-radius: 12px; 
+      overflow: hidden; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
+      background: #1a1a1a; 
+      height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #333;
+    }
 
-.smn-zoom {
-  width: 1800px;
-  height: 1080px;
-  transform: scale(0.8);
-  transform-origin: 90% 20%;
-  object-fit: contain;
-}
+    .smn-zoom {
+      width: 1800px;
+      height: 1080px;
+      transform: scale(0.8);
+      transform-origin: 90% 20%;
+      object-fit: contain;
+    }
 
-.goes-img { 
-  width: 900px;
-  height: 540px;
-  transform: scale(1.6);
-  transform-origin: 20% 60%;
-  object-fit: contain;
-}
+    .goes-img {
+      width: 900px;
+      height: 540px;
+      transform: scale(1.6);
+      transform-origin: 20% 60%;
+      object-fit: contain;
+    }
 
-.precip-summary { 
-  display: flex; 
-  justify-content: space-around; 
-  margin-bottom: 1rem; 
-  flex-wrap: wrap; 
-  gap: 0.5rem; 
-}
-.precip-card { 
-  background: #1e1e1e; 
-  padding: 0.75rem; 
-  border-radius: 12px; 
-  text-align: center; 
-  flex: 1; 
-  min-width: 80px; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-  border: 1px solid #333;
-}
-.precip-card h5 { 
-  margin: 0; 
-  font-size: 0.8rem; 
-  color: #aaa; 
-}
-.precip-card h3 { 
-  margin: 0.25rem 0 0; 
-  font-size: 1.1rem; 
-  font-weight: 600; 
-  color: #fff;
-}
+    .precip-summary { 
+      display: flex; 
+      justify-content: space-around; 
+      margin-bottom: 1rem; 
+      flex-wrap: wrap; 
+      gap: 0.5rem; 
+    }
+    .precip-card { 
+      background: #1e1e1e; 
+      padding: 0.75rem; 
+      border-radius: 12px; 
+      text-align: center; 
+      flex: 1; 
+      min-width: 80px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      border: 1px solid #333;
+    }
+    .precip-card h5 { 
+      margin: 0; 
+      font-size: 0.8rem; 
+      color: #aaa; 
+    }
+    .precip-card h3 { 
+      margin: 0.25rem 0 0; 
+      font-size: 1.1rem; 
+      font-weight: 600; 
+      color: #fff;
+    }
 
-.table-container { 
-  overflow-x: auto; 
-  border-radius: 12px; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-  border: 1px solid #333;
-}
-.table { 
-  margin: 0; 
-  font-size: 0.85rem; 
-  background: #1e1e1e; 
-  color: #e0e0e0;
-}
-.table th { 
-  font-weight: 600; 
-  background: #252525; 
-  color: #ccc;
-}
-.table td { 
-  vertical-align: middle; 
-  border-color: #333;
-}
-.table-hover tbody tr:hover {
-  background-color: #2a2a2a;
-}
+    .table-container { 
+      overflow-x: auto; 
+      border-radius: 12px; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+      border: 1px solid #333;
+    }
+    .table { 
+      margin: 0; 
+      font-size: 0.85rem; 
+      background: #1e1e1e; 
+      color: #e0e0e0;
+    }
+    .table th { 
+      font-weight: 600; 
+      background: #252525; 
+      color: #ccc;
+    }
+    .table td { 
+      vertical-align: middle; 
+      border-color: #333;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #2a2a2a;
+    }
 
-.footer { 
-  text-align: center; 
-  margin-top: 2rem; 
-  font-size: 0.75rem; 
-  color: #888; 
-}
-.footer a { 
-  color: #1e90ff; 
-  text-decoration: none; 
-}  </style></head>
+    .footer { 
+      text-align: center; 
+      margin-top: 2rem; 
+      font-size: 0.75rem; 
+      color: #888; 
+    }
+    .footer a { 
+      color: #1e90ff; 
+      text-decoration: none; 
+    }
+  </style>
+</head>
 <body>
 
   <div class="header-mobile">
@@ -201,7 +202,7 @@
       <strong class="mx-2 max">—</strong>
     </div>
     <div class="text-muted" id="current-date">—</div>
-    <div class="current-time" id="current-time">HH:MM</div>
+    <div class="current-time" id="current-time">HH:MM</div> <!-- Hora actual -->
   </div>
 
   <div class="forecast-small" id="forecast-small"></div>
@@ -223,15 +224,7 @@
     </div>
   </div>
 
-<!-- RADAR INVAP -->
-<div class="sat-section radar-section">
-  <div class="sat-title">Radar Rocket - INVAP</div>
-  <div class="radar-img">
-    <img id="radar-img" src="/api/data?radar=latest" loading="lazy" alt="Radar Rocket - INVAP" />
-  </div>
-</div>
-
-  <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones </h3>
+  <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones 🌧️</h3>
 
   <div class="precip-summary">
     <div class="precip-card">
@@ -271,8 +264,7 @@
   <div class="footer">
     Datos: <a href="https://x.com/meteobahia" target="_blank">@meteobahia</a> | 
     <a href="https://www.lanueva.com/servicios/pronostico" target="_blank">La Nueva</a> | 
-    SMN | NOAA
-
+    SMN | NOAA<br>
     Por <a href="https://x.com/JuanChevalier" target="_blank">@JuanChevalier</a> | 
     <span id="update-time"></span>
   </div>
@@ -332,8 +324,7 @@
             const displayDate = date === todayStr ? 'Hoy' : date.split('-').slice(1).join('/');
             tbody.innerHTML += `
               <tr>
-                <td><strong>${time}</strong>
-<small>${displayDate}</small></td>
+                <td><strong>${time}</strong><br><small>${displayDate}</small></td>
                 <td>${r.cond}</td>
                 <td><strong>${r.rain} mm</strong></td>
                 <td><small>${r.source}</small></td>
@@ -354,42 +345,13 @@
     if (updateEl) updateEl.textContent = now.toLocaleTimeString('es-AR');
   }
 
-  function updateRadarImage() {
-    const now = new Date();
-    const pad = n => n.toString().padStart(2, '0');
-    const yyyy = now.getFullYear();
-    const mm = pad(now.getMonth() + 1);
-    const dd = pad(now.getDate());
-    const hh = pad(now.getHours());
-    const min = pad(Math.floor(now.getMinutes() / 5) * 5); // Redondea a 5 min
-    const ss = "23"; // Fijo en tus ejemplos
-
-    const filename = `RMA10_240_ZH_CMAX_${yyyy}${mm}${dd}_${hh}${min}${ss}Z.png`;
-    const url = `https://estaticos.smn.gob.ar/vmsr/radar/${filename}`;
-    
-    const img = document.getElementById("radar-img");
-    if (img) {
-      img.src = url + '?t=' + Date.now();
-      img.onerror = () => {
-        img.src = "https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_20251114_130223Z.png";
-      };
-    }
-  }
-
   window.onload = () => {
     loadData();
     updateTime();
-    updateRadarImage();
     setInterval(updateTime, 1000);
     setInterval(loadData, 900000);
-    setInterval(updateRadarImage, 600000); // 10 min
   };
 </script>
-  </body>
+
+</body>
 </html>
-
-
-
-
-
-
