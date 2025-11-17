@@ -357,7 +357,8 @@
     }
   }
 
- // NUEVA FUNCIÓN: pide al backend la URL del radar y actualiza la imagen
+  // NUEVA FUNCIÓN: Carga imagen del radar desde SMN oficial
+  
 async function loadRadarImageSMN() {
   const radarImg = document.getElementById('radar-img');
   if (!radarImg) return;
@@ -367,16 +368,17 @@ async function loadRadarImageSMN() {
     if (!res.ok) throw new Error('Radar API error');
 
     const data = await res.json();
-    // cache buster para que no te quede pegada en caché
+    // Cache buster para que no quede pegada por caché del navegador o CDN
     radarImg.src = data.url + '?t=' + Date.now();
     radarImg.alt = 'Radar Bahía Blanca - Actualizado ' + new Date().toLocaleTimeString('es-AR');
+    console.log('Radar SMN actualizado:', data.url);
   } catch (err) {
     console.error('Error cargando radar SMN:', err);
     radarImg.alt = 'Radar Bahía Blanca - no disponible';
   }
 }
 
-  function updateTime() {
+function updateTime() {
     const now = new Date();
     const timeEl = document.getElementById("current-time");
     if (timeEl) timeEl.textContent = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
@@ -384,17 +386,15 @@ async function loadRadarImageSMN() {
     if (updateEl) updateEl.textContent = now.toLocaleTimeString('es-AR');
   }
 
-window.onload = () => {
-  loadData();
-  loadRadarImageSMN();      // ahora llama a tu API interna
-  updateTime();
-  setInterval(updateTime, 1000);
-  setInterval(loadData, 900000);       // Cada 15 min datos
-  setInterval(loadRadarImageSMN, 300000); // Cada 5 min radar
-};
-
+  window.onload = () => {
+    loadData();
+    loadRadarImageSMN(); // Cargar radar SMN al inicio
+    updateTime();
+    setInterval(updateTime, 1000);
+    setInterval(loadData, 900000); // Cada 15 min para datos
+    setInterval(loadRadarImageSMN, 300000); // Cada 5 min para radar
+  };
 </script>
 
 </body>
 </html>
-
