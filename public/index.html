@@ -357,56 +357,24 @@
     }
   }
 
-  // NUEVA FUNCIÓN: Carga imagen del radar desde SMN oficial
-  async function loadRadarImageSMN() {
-    const radarImg = document.getElementById('radar-img');
-    if (!radarImg) return;
+ // NUEVA FUNCIÓN: pide al backend la URL del radar y actualiza la imagen
+async function loadRadarImageSMN() {
+  const radarImg = document.getElementById('radar-img');
+  if (!radarImg) return;
 
-    try {
-      // Paso 1: Simular selección de radar vía POST al endpoint SMN
-      const formData = new FormData();
-      formData.append('radar', 'bahia_blanca'); // Valor del option para Bahía Blanca
+  try {
+    const res = await fetch('/api/radar');
+    if (!res.ok) throw new Error('Radar API error');
 
-      const response = await fetch('https://www.smn.gob.ar/vmsr/radar/select_radar.php', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) throw new Error('SMN endpoint failed');
-
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const imgSrc = doc.querySelector('#imgRadar')?.src || doc.querySelector('img[src*="RMA10"]')?.src;
-
-      if (imgSrc && imgSrc.includes('RMA10')) {
-        radarImg.src = imgSrc;
-        radarImg.alt = `Radar Bahía Blanca - Última imagen (${new Date().toLocaleTimeString('es-AR')})`;
-        console.log('Radar SMN actualizado:', imgSrc);
-      } else {
-        // Fallback: Generar URL con timestamp actual (UTC)
-        const now = new Date();
-        const year = now.getUTCFullYear();
-        const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(now.getUTCDate()).padStart(2, '0');
-        const hours = String(now.getUTCHours()).padStart(2, '0');
-        const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-        const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}Z`;
-        const fallbackSrc = `https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_${timestamp}.png`;
-
-        radarImg.src = fallbackSrc;
-        radarImg.alt = `Radar Bahía Blanca - Estimado (${new Date().toLocaleTimeString('es-AR')})`;
-        console.warn('Usando fallback timestamp:', fallbackSrc);
-      }
-    } catch (err) {
-      console.error('Error cargando radar SMN:', err);
-      // Fallback extra: Usar timestamp fijo reciente si todo falla (actualiza manualmente si es viejo)
-      const emergencySrc = 'https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_20251117_130000Z.png'; // Ejemplo; ajusta si necesario
-      radarImg.src = emergencySrc;
-      radarImg.alt = 'Radar Bahía Blanca - Imagen de respaldo';
-    }
+    const data = await res.json();
+    // cache buster para que no te quede pegada en caché
+    radarImg.src = data.url + '?t=' + Date.now();
+    radarImg.alt = 'Radar Bahía Blanca - Actualizado ' + new Date().toLocaleTimeString('es-AR');
+  } catch (err) {
+    console.error('Error cargando radar SMN:', err);
+    radarImg.alt = 'Radar Bahía Blanca - no disponible';
   }
+}
 
   function updateTime() {
     const now = new Date();
@@ -416,15 +384,17 @@
     if (updateEl) updateEl.textContent = now.toLocaleTimeString('es-AR');
   }
 
-  window.onload = () => {
-    loadData();
-    loadRadarImageSMN(); // Cargar radar SMN al inicio
-    updateTime();
-    setInterval(updateTime, 1000);
-    setInterval(loadData, 900000); // Cada 15 min para datos
-    setInterval(loadRadarImageSMN, 300000); // Cada 5 min para radar
-  };
+window.onload = () => {
+  loadData();
+  loadRadarImageSMN();      // ahora llama a tu API interna
+  updateTime();
+  setInterval(updateTime, 1000);
+  setInterval(loadData, 900000);       // Cada 15 min datos
+  setInterval(loadRadarImageSMN, 300000); // Cada 5 min radar
+};
+
 </script>
 
 </body>
 </html>
+
