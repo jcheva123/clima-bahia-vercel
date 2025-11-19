@@ -353,6 +353,34 @@
     }
   }
 
+// Función para cargar radar dinámico de ClimaSurGBA
+function loadRadarImage() {
+  const radarImg = document.getElementById('radar-img');
+  if (!radarImg) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes() - (now.getMinutes() % 10)).padStart(2, '0'); // Redondea a múltiplo de 10 min
+  const seconds = '00';
+  const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
+
+  const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${timestamp}.png?t=${Date.now()}`;
+  
+  radarImg.src = imgSrc;
+  radarImg.alt = `Radar Bahía Blanca - Última imagen (${now.toLocaleTimeString('es-AR')})`;
+  console.log('Radar URL generada:', imgSrc);
+}
+
+// En window.onload, llamala
+window.onload = () => {
+  // ... tu código existente ...
+  loadRadarImage(); // Carga inicial
+  setInterval(loadRadarImage, 10 * 60 * 1000); // Cada 10 min
+};
+  
   function updateTime() {
     const now = new Date();
     const timeEl = document.getElementById("current-time");
@@ -374,3 +402,4 @@
 
 </body>
 </html>
+
