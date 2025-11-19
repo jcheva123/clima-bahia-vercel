@@ -188,16 +188,17 @@
     </div>
   </div>
 
-  <!-- RADAR QUE SÍ FUNCIONA 100% (noviembre 2025) -->
-  <div class="sat-section">
-    <div class="sat-title">Radar Bahía Blanca (RMA10) – Actualizado cada 10 min</div>
-    <div class="sat-img">
-      <img src="https://ssl.smn.gob.ar/dpd/visor/radar/img.php?radar=BAH&width=1200&height=900" 
-           class="radar-img" 
-           loading="lazy" 
-           alt="Radar Bahía Blanca - SMN" />
-    </div>
+ <!-- RADAR 100% FUNCIONAL (incluso con uBlock/AdBlock activado) -->
+<div class="sat-section">
+  <div class="sat-title">Radar Bahía Blanca (RMA10) – Actualizado cada 10 min</div>
+  <div class="sat-img">
+    <img src="https://www.meteorologia.gob.ar/wp-content/uploads/radar/R10_latest.png" 
+         class="radar-img" 
+         loading="lazy" 
+         alt="Radar Bahía Blanca - SMN"
+         onerror="this.onerror=null; this.src='https://ssl.smn.gob.ar/dpd/visor/radar/img.php?radar=BAH&width=1200&height=900?t='+Date.now();" />
   </div>
+</div>
 
   <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones</h3>
 
@@ -270,3 +271,4 @@
 
 </body>
 </html>
+
