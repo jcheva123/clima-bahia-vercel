@@ -2,24 +2,30 @@ const axios = require('axios');
 
 module.exports = async (req, res) => {
   try {
-    // Fecha actual (19/11/2025 11:13 AM -03 = 14:13 UTC)
+    // Fecha actual (19/11/2025 11:19 AM -03 = 14:19 UTC)
     const now = new Date();
     const today = now.toISOString().split('T')[0]; // "2025-11-19"
 
     // Obtener datos de Open-Meteo para Bahía Blanca (lat: -38.7196, lon: -62.2724)
-    const forecastResponse = await axios.get(
-      'https://api.open-meteo.com/v1/forecast',
-      {
-        params: {
-          latitude: -38.7196,
-          longitude: -62.2724,
-          hourly: 'temperature_2m,weathercode',
-          daily: 'temperature_2m_max,temperature_2m_min,weathercode',
-          timezone: 'America/Argentina/Buenos_Aires',
-          forecast_days: 7
+    let forecastResponse;
+    try {
+      forecastResponse = await axios.get(
+        'https://api.open-meteo.com/v1/forecast',
+        {
+          params: {
+            latitude: -38.7196,
+            longitude: -62.2724,
+            hourly: 'temperature_2m,weathercode',
+            daily: 'temperature_2m_max,temperature_2m_min,weathercode',
+            timezone: 'America/Argentina/Buenos_Aires',
+            forecast_days: 7
+          }
         }
-      }
-    );
+      );
+    } catch (apiErr) {
+      console.error('Error fetching Open-Meteo data:', apiErr.message);
+      throw new Error('Failed to fetch weather data');
+    }
 
     const data = forecastResponse.data;
     const daily = data.daily;
@@ -47,13 +53,13 @@ module.exports = async (req, res) => {
     // Datos de precipitación actualizados según La Nueva (19/11/2025)
     const laNuevaData = {
       precip: {
-        monthly_mm: 21.5, // Actualizado a 21,5 mm (puede ajustarse con scraping)
+        monthly_mm: 21.5,
         historical_nov: 57.2,
         yearly_mm: 999.6
       }
     };
 
-    // Simular posts de @meteobahia (incluyendo el del 15/11 con 0.2 mm)
+    // Simular posts de @meteobahia
     const meteobahiaPosts = [
       { datetime: "2025-11-19 11:00", cond: getWeatherCondition(getCurrentWeatherCode(hourly)), rain: 0, source: "@meteobahia" },
       { datetime: "2025-11-18 14:00", cond: "Parcialmente nublado", rain: 0, source: "@meteobahia" },
@@ -84,8 +90,8 @@ module.exports = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('API Error:', err);
-    res.status(500).json({ error: 'Error interno' });
+    console.error('API Error:', err.message);
+    res.status(500).json({ error: 'Error interno al procesar los datos meteorológicos' });
   }
 };
 
