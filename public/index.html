@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Clima Bahía Blanca</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <!-- Agregado: Favicon para evitar el 404 -->
+  <!-- Agregado: Favicon para evitar el 404 (descarga uno y ponlo en public/) -->
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <style>
     * { box-sizing: border-box; }
@@ -125,7 +125,7 @@
       object-fit: contain;
     }
 
-    /* Nueva clase para radar: Ajuste de zoom similar a SMN */
+    /* Clase para radar: Ajuste de zoom */
     .radar-img {
       width: 1000px;
       height: 800px;
@@ -235,7 +235,7 @@
     </div>
   </div>
 
-  <!-- SECCIÓN RADAR SMN: Con src placeholder; se actualiza via JS -->
+  <!-- SECCIÓN RADAR SMN: Placeholder; se actualiza via JS con timestamp dinámico -->
   <div class="sat-section">
     <div class="sat-title">Radar Rocket - INVAP (SMN)</div>
     <div class="sat-img">
@@ -290,11 +290,41 @@
   </div>
 
 <script>
+  // Mock data para pruebas locales (comenta si usas servidor)
+  const mockData = {
+    forecast: [
+      { day: "Domingo", date: "17/11", min: 18, max: 28, icon: "☀️" },
+      { day: "Lunes", date: "18/11", min: 16, max: 27, icon: "⛅" },
+      { day: "Martes", date: "19/11", min: 17, max: 29, icon: "☁️" },
+      { day: "Miércoles", date: "20/11", min: 15, max: 26, icon: "🌤️" },
+      { day: "Jueves", date: "21/11", min: 19, max: 31, icon: "⛈️" },
+      { day: "Viernes", date: "22/11", min: 20, max: 30, icon: "🌧️" },
+      { day: "Sábado", date: "23/11", min: 18, max: 28, icon: "☔" }
+    ],
+    summaries: {
+      today: "0 mm",
+      month: "45 mm",
+      historicalNov: "57 mm",
+      yearly: "850 mm"
+    },
+    precipRecords: [
+      { datetime: "2025-11-17 12:00", cond: "Parcialmente nublado", rain: 0, source: "@meteobahia" },
+      { datetime: "2025-11-17 09:00", cond: "Despejado", rain: 0, source: "@meteobahia" }
+    ]
+  };
+
   async function loadData() {
     try {
-      const res = await fetch('/api/data');
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
+      // Si estás en local (sin servidor), usa mock; sino fetch real
+      let data;
+      if (window.location.protocol === 'file:') {
+        data = mockData;
+        console.warn('Modo local: Usando datos mock. Usa un servidor para datos reales.');
+      } else {
+        const res = await fetch('/api/data');
+        if (!res.ok) throw new Error('API error');
+        data = await res.json();
+      }
 
       const today = data.forecast[0];
       const todayCard = document.querySelector('#today-card');
@@ -354,31 +384,43 @@
       }
     } catch (err) {
       console.error('Error:', err);
+      // En local, usa mock si fetch falla
+      if (window.location.protocol === 'file:') {
+        loadData(); // Retry con mock (ya detectado arriba)
+      }
     }
   }
 
-  // NUEVA FUNCIÓN: Carga imagen del radar desde SMN oficial
-  
-async function loadRadarImageSMN() {
-  const radarImg = document.getElementById('radar-img');
-  if (!radarImg) return;
+  // Función simplificada: Genera URL radar con timestamp actual UTC
+  function loadRadarImageSMN() {
+    const radarImg = document.getElementById('radar-img');
+    if (!radarImg) return;
 
-  try {
-    const res = await fetch('/api/radar');
-    if (!res.ok) throw new Error('Radar API error');
+    try {
+      // Timestamp UTC actual (SMN usa Z=UTC)
+      const now = new Date();
+      const year = now.getUTCFullYear();
+      const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(now.getUTCDate()).padStart(2, '0');
+      const hours = String(now.getUTCHours()).padStart(2, '0');
+      const minutes = String(now.getUTCMinutes() - (now.getUTCMinutes() % 5)).padStart(2, '0'); // Redondea a múltiplo de 5 min
+      const seconds = '00'; // Aprox; SMN usa SS=00-59 pero cerca
+      const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}Z`;
+      const imgSrc = `https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_${timestamp}.png`;
 
-    const data = await res.json();
-    // Cache buster para que no quede pegada por caché del navegador o CDN
-    radarImg.src = data.url + '?t=' + Date.now();
-    radarImg.alt = 'Radar Bahía Blanca - Actualizado ' + new Date().toLocaleTimeString('es-AR');
-    console.log('Radar SMN actualizado:', data.url);
-  } catch (err) {
-    console.error('Error cargando radar SMN:', err);
-    radarImg.alt = 'Radar Bahía Blanca - no disponible';
+      radarImg.src = imgSrc + `?t=${Date.now()}`; // Cache-bust para refresh
+      radarImg.alt = `Radar Bahía Blanca - Última estimada (${now.toLocaleTimeString('es-AR')})`;
+      console.log('Radar URL generada:', imgSrc);
+    } catch (err) {
+      console.error('Error generando radar:', err);
+      // Fallback a URL reciente fija (actualiza esta si es vieja; chequea SMN manual)
+      const emergencySrc = 'https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_20251117_150000Z.png';
+      radarImg.src = emergencySrc;
+      radarImg.alt = 'Radar Bahía Blanca - Imagen reciente (SMN)';
+    }
   }
-}
 
-function updateTime() {
+  function updateTime() {
     const now = new Date();
     const timeEl = document.getElementById("current-time");
     if (timeEl) timeEl.textContent = now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
@@ -387,12 +429,16 @@ function updateTime() {
   }
 
   window.onload = () => {
+    // Alerta suave para local
+    if (window.location.protocol === 'file:') {
+      alert('¡Modo local detectado! Los datos son mock y el radar aproximado. Usa un servidor local (ej. Node/Express) o Vercel para versión completa.');
+    }
     loadData();
-    loadRadarImageSMN(); // Cargar radar SMN al inicio
+    loadRadarImageSMN(); // Carga radar
     updateTime();
     setInterval(updateTime, 1000);
-    setInterval(loadData, 900000); // Cada 15 min para datos
-    setInterval(loadRadarImageSMN, 300000); // Cada 5 min para radar
+    setInterval(loadData, 900000); // 15 min
+    setInterval(loadRadarImageSMN, 300000); // 5 min para radar
   };
 </script>
 
