@@ -1,68 +1,74 @@
+const axios = require('axios');
+
 module.exports = async (req, res) => {
   try {
-    // Fecha actual (19/11/2025 11:08 AM -03 = 14:08 UTC)
+    // Fecha actual (19/11/2025 11:13 AM -03 = 14:13 UTC)
     const now = new Date();
     const today = now.toISOString().split('T')[0]; // "2025-11-19"
 
-    // Generar pronóstico dinámico para los próximos 7 días basado en Meteored
-    const forecast = [];
-    const baseData = [
-      { date: "2025-11-19", max: 23, min: 5, cond: "Cubierto", icon: "☁️" }, // Hoy (Meteored)
-      { date: "2025-11-20", max: 23, min: 13, cond: "Nubes y claros", icon: "⛅" }, // Jueves
-      { date: "2025-11-21", max: 22, min: 10, cond: "Nubes y claros", icon: "⛅" }, // Viernes
-      { date: "2025-11-22", max: 28, min: 15, cond: "Nubes y claros", icon: "⛅" }, // Sábado
-      { date: "2025-11-23", max: 30, min: 17, cond: "Nubes y claros", icon: "⛅" }, // Domingo
-      { date: "2025-11-24", max: 31, min: 17, cond: "Nubes y claros", icon: "⛅" }, // Lunes
-      { date: "2025-11-25", max: 34, min: 17, cond: "Soleado", icon: "☀️" } // Martes
-    ];
+    // Obtener datos de Open-Meteo para Bahía Blanca (lat: -38.7196, lon: -62.2724)
+    const forecastResponse = await axios.get(
+      'https://api.open-meteo.com/v1/forecast',
+      {
+        params: {
+          latitude: -38.7196,
+          longitude: -62.2724,
+          hourly: 'temperature_2m,weathercode',
+          daily: 'temperature_2m_max,temperature_2m_min,weathercode',
+          timezone: 'America/Argentina/Buenos_Aires',
+          forecast_days: 7
+        }
+      }
+    );
 
+    const data = forecastResponse.data;
+    const daily = data.daily;
+    const hourly = data.hourly;
+
+    // Generar pronóstico para los próximos 7 días
+    const forecast = [];
     for (let i = 0; i < 7; i++) {
       const date = new Date(now);
       date.setDate(now.getDate() + i);
       const isoDate = date.toISOString().split('T')[0];
-      const dayData = baseData.find(d => d.date === isoDate) || {
-        max: 22 + i * 2, // Incremento gradual si no hay datos
-        min: 10 + i * 1.5,
-        cond: i < 5 ? "Nubes y claros" : "Soleado",
-        icon: i < 5 ? "⛅" : "☀️"
-      };
-      const dayName = date.toLocaleDateString('es-AR', { weekday: 'long' });
-      const dayShort = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
-      forecast.push({
-        day: dayName,
-        date: dayShort,
-        min: dayData.min,
-        max: dayData.max,
-        cond: dayData.cond,
-        icon: dayData.icon
-      });
+      const idx = daily.time.indexOf(isoDate);
+      if (idx !== -1) {
+        const dayName = date.toLocaleDateString('es-AR', { weekday: 'long' });
+        const dayShort = date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
+        const max = daily.temperature_2m_max[idx];
+        const min = daily.temperature_2m_min[idx];
+        const weatherCode = daily.weathercode[idx];
+        const icon = getWeatherIcon(weatherCode);
+        const cond = getWeatherCondition(weatherCode);
+        forecast.push({ day: dayName, date: dayShort, min, max, cond, icon });
+      }
     }
 
     // Datos de precipitación actualizados según La Nueva (19/11/2025)
     const laNuevaData = {
       precip: {
-        monthly_mm: 21.5, // Actualizado a 21,5 mm
-        historical_nov: 57.2, // Coincide con La Nueva
-        yearly_mm: 999.6 // Actualizado a 999,6 mm
+        monthly_mm: 21.5, // Actualizado a 21,5 mm (puede ajustarse con scraping)
+        historical_nov: 57.2,
+        yearly_mm: 999.6
       }
     };
 
     // Simular posts de @meteobahia (incluyendo el del 15/11 con 0.2 mm)
     const meteobahiaPosts = [
-      { datetime: "2025-11-19 11:00", cond: "Cubierto", rain: 0, source: "@meteobahia" }, // Simulado para hoy
+      { datetime: "2025-11-19 11:00", cond: getWeatherCondition(getCurrentWeatherCode(hourly)), rain: 0, source: "@meteobahia" },
       { datetime: "2025-11-18 14:00", cond: "Parcialmente nublado", rain: 0, source: "@meteobahia" },
       { datetime: "2025-11-17 10:00", cond: "Despejado", rain: 0, source: "@meteobahia" },
-      { datetime: "2025-11-15 22:16", cond: "Nublado", rain: 0.2, source: "@meteobahia" }, // Post real
+      { datetime: "2025-11-15 22:16", cond: "Nublado", rain: 0.2, source: "@meteobahia" },
       { datetime: "2025-11-14 18:00", cond: "Mayormente nublado", rain: 0, source: "@meteobahia" }
     ];
 
     // Calcular lluvia de hoy
     const todayPosts = meteobahiaPosts.filter(p => p.datetime.startsWith(today));
     const todayRain = todayPosts.length > 0 ? Math.max(...todayPosts.map(p => p.rain)) : 0;
-    const lastPost = meteobahiaPosts[0]; // Último registro
+    const lastPost = meteobahiaPosts[0];
     const todayLabel = todayPosts.length > 0 ? `${todayRain} mm` : `${lastPost.rain} mm`;
 
-    // Registro reciente (últimos 5 posts)
+    // Registro reciente
     const recentRecords = meteobahiaPosts
       .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
       .slice(0, 5);
@@ -82,3 +88,57 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: 'Error interno' });
   }
 };
+
+// Funciones auxiliares para traducir códigos de clima
+function getWeatherCondition(weatherCode) {
+  const conditions = {
+    0: 'Despejado',
+    1: 'Mayormente despejado',
+    2: 'Parcialmente nublado',
+    3: 'Nublado',
+    45: 'Niebla',
+    51: 'Llovizna ligera',
+    53: 'Llovizna moderada',
+    55: 'Llovizna densa',
+    61: 'Lluvia ligera',
+    63: 'Lluvia moderada',
+    65: 'Lluvia fuerte',
+    80: 'Chubascos ligeros',
+    81: 'Chubascos moderados',
+    82: 'Chubascos fuertes',
+    95: 'Tormenta eléctrica',
+    96: 'Tormenta con granizo ligero',
+    99: 'Tormenta con granizo fuerte'
+  };
+  return conditions[weatherCode] || 'Desconocido';
+}
+
+function getWeatherIcon(weatherCode) {
+  const icons = {
+    0: '☀️',
+    1: '🌤️',
+    2: '⛅',
+    3: '☁️',
+    45: '🌫️',
+    51: '🌧️',
+    53: '🌧️',
+    55: '🌧️',
+    61: '🌦️',
+    63: '🌧️',
+    65: '⛈️',
+    80: '🌦️',
+    81: '🌧️',
+    82: '⛈️',
+    95: '⛈️',
+    96: '⛈️',
+    99: '⛈️'
+  };
+  return icons[weatherCode] || '☁️';
+}
+
+function getCurrentWeatherCode(hourly) {
+  const now = new Date();
+  const utcHour = now.getUTCHours() + (now.getUTCMinutes() / 60);
+  const idx = Math.floor(utcHour);
+  return hourly.weathercode[idx] || 3; // Default a nublado si no hay dato
+}
