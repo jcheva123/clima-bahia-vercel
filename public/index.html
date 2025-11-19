@@ -362,28 +362,19 @@
     const radarImg = document.getElementById('radar-img');
     if (!radarImg) return;
 
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(now.getUTCDate()).padStart(2, '0');
-    const hours = String(now.getUTCHours()).padStart(2, '0');
-    const minutes = String(now.getUTCMinutes()).padStart(2, '0'); // Minuto exacto
-    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-    const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
-
-    // Intentar la imagen más reciente conocida como base
-    const latestKnown = '20251119-104759'; // Última que confirmaste (10:47:59 UTC)
-    const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${timestamp}.png?t=${Date.now()}`;
-    const fallbackSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${latestKnown}.png?t=${Date.now()}`; // Fallback a 10:47:59
+    // Intentar la última imagen conocida como base
+    const latestKnown = '20251119-114803'; // Última confirmada (11:48:03 UTC)
+    const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${latestKnown}.png?t=${Date.now()}`;
+    const dynamicFallback = `https://www.climasurgba.com.ar/radar/bahia_blanca_latest.png?t=${Date.now()}`; // Fallback dinámico
 
     radarImg.src = imgSrc;
-    radarImg.alt = `Radar Bahía Blanca - Última imagen (${now.toLocaleTimeString('es-AR')})`;
-    console.log('Intentando radar:', imgSrc);
+    radarImg.alt = `Radar Bahía Blanca - Última imagen conocida (${new Date().toLocaleTimeString('es-AR')})`;
+    console.log('Cargando radar:', imgSrc);
 
-    // Retry con fallback si falla
+    // Retry con fallback dinámico si falla
     radarImg.onerror = () => {
-      console.log('Imagen no encontrada, usando fallback:', fallbackSrc);
-      radarImg.src = fallbackSrc;
+      console.log('Imagen conocida no cargó, usando fallback dinámico:', dynamicFallback);
+      radarImg.src = dynamicFallback;
       radarImg.onerror = null; // Evitar loop infinito
     };
   }
@@ -397,12 +388,13 @@
     updateTime();
     setInterval(updateTime, 1000);
     setInterval(loadData, 900000); // 15 min
-    setInterval(loadRadarImage, 2 * 60 * 1000); // 2 min para radar
+    setInterval(loadRadarImage, 1 * 60 * 1000); // 1 min para radar
   };
 </script>
 
 </body>
 </html>
+
 
 
 
