@@ -1,6 +1,6 @@
 module.exports = async (req, res) => {
   try {
-    // Fecha actual (19/11/2025 09:55 -03)
+    // Fecha actual (19/11/2025 10:04 -03)
     const now = new Date();
     const today = now.toISOString().split('T')[0]; // "2025-11-19"
     const offset = now.getTimezoneOffset() / 60; // -3 para Argentina
@@ -19,12 +19,12 @@ module.exports = async (req, res) => {
       forecast.push({ day: dayName, date: dayShort, min, max, cond, icon: '', rain });
     }
 
-    // Datos de precipitación (actualizados según La Nueva y @meteobahia)
+    // Datos de precipitación actualizados según La Nueva (19/11/2025)
     const laNuevaData = {
       precip: {
-        monthly_mm: 20, // Actualizado a 20 mm (La Nueva dice 20 mm hoy)
+        monthly_mm: 21.5, // Actualizado a 21,5 mm (La Nueva)
         historical_nov: 57.2, // Coincide con La Nueva
-        yearly_mm: 998.1 // Actualizado a 998.1 mm (La Nueva)
+        yearly_mm: 999.6 // Actualizado a 999,6 mm (La Nueva)
       }
     };
 
