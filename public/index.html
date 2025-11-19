@@ -249,13 +249,13 @@
   // Mock data para pruebas locales (comenta si usas servidor)
   const mockData = {
     forecast: [
-      { day: "Domingo", date: "17/11", min: 18, max: 28, icon: "☀️" },
-      { day: "Lunes", date: "18/11", min: 16, max: 27, icon: "⛅" },
-      { day: "Martes", date: "19/11", min: 17, max: 29, icon: "☁️" },
-      { day: "Miércoles", date: "20/11", min: 15, max: 26, icon: "🌤️" },
-      { day: "Jueves", date: "21/11", min: 19, max: 31, icon: "⛈️" },
-      { day: "Viernes", date: "22/11", min: 20, max: 30, icon: "🌧️" },
-      { day: "Sábado", date: "23/11", min: 18, max: 28, icon: "☔" }
+      { day: "Miércoles", date: "19/11", min: 5, max: 23, icon: "☁️", cond: "Cubierto" },
+      { day: "Jueves", date: "20/11", min: 13, max: 23, icon: "⛅", cond: "Nubes y claros" },
+      { day: "Viernes", date: "21/11", min: 10, max: 22, icon: "⛅", cond: "Nubes y claros" },
+      { day: "Sábado", date: "22/11", min: 15, max: 28, icon: "⛅", cond: "Nubes y claros" },
+      { day: "Domingo", date: "23/11", min: 17, max: 30, icon: "⛅", cond: "Nubes y claros" },
+      { day: "Lunes", date: "24/11", min: 17, max: 31, icon: "⛅", cond: "Nubes y claros" },
+      { day: "Martes", date: "25/11", min: 17, max: 34, icon: "☀️", cond: "Soleado" }
     ],
     summaries: {
       today: "0 mm",
@@ -305,6 +305,7 @@
               <div class="icon">${d.icon || '☁️'}</div>
               <div>${d.day.slice(0, 3)}</div>
               <div><strong>${d.min}°</strong>/${d.max}°</div>
+              <div class="cond">${d.cond}</div>
             </div>`;
         });
       }
@@ -367,7 +368,7 @@
     const month = String(now.getUTCMonth() + 1).padStart(2, '0');
     const day = String(now.getUTCDate()).padStart(2, '0');
     const hours = String(now.getUTCHours()).padStart(2, '0');
-    const minutes = String(now.getUTCMinutes()).padStart(2, '0'); // Minuto exacto
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
     const seconds = String(now.getUTCSeconds()).padStart(2, '0');
     const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
 
@@ -396,13 +397,14 @@
     loadRadarImage(); // Carga inicial del radar
     updateTime();
     setInterval(updateTime, 1000);
-    setInterval(loadData, 900000); // 15 min
+    setInterval(loadData, 3600000); // 1 hora para pronóstico (ajustable)
     setInterval(loadRadarImage, 2 * 60 * 1000); // 2 min para radar
   };
 </script>
 
 </body>
 </html>
+
 
 
 
