@@ -362,16 +362,22 @@
     const radarImg = document.getElementById('radar-img');
     if (!radarImg) return;
 
-    // Usar solo el fallback dinámico como fuente principal
-    const dynamicSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca_latest.png?t=${Date.now()}`;
-    radarImg.src = dynamicSrc;
-    radarImg.alt = `Radar Bahía Blanca - Última imagen (${new Date().toLocaleTimeString('es-AR')})`;
-    console.log('Cargando radar dinámico:', dynamicSrc);
+    // Usar la última imagen conocida como base
+    const latestKnown = '20251119-132101'; // Última confirmada (13:21:01 UTC)
+    const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${latestKnown}.png?t=${Date.now()}`;
+    radarImg.src = imgSrc;
+    radarImg.alt = `Radar Bahía Blanca - Última imagen conocida (${new Date().toLocaleTimeString('es-AR')})`;
+    console.log('Cargando radar:', imgSrc);
 
-    // Fallback a la última imagen conocida si falla
+    // Forzar recarga periódica
+    setTimeout(() => {
+      radarImg.src = imgSrc + '&force=' + Date.now(); // Forzar recarga
+    }, 1000); // Recarga cada 1 segundo como prueba
+
+    // Fallback si falla
     radarImg.onerror = () => {
-      console.log('Fallback dinámico falló, usando imagen fija:', 'https://www.climasurgba.com.ar/radar/bahia_blanca-20251119-121812.png?t=' + Date.now());
-      radarImg.src = 'https://www.climasurgba.com.ar/radar/bahia_blanca-20251119-121812.png?t=' + Date.now();
+      console.log('Imagen conocida falló, usando fallback dinámico:', 'https://www.climasurgba.com.ar/radar/bahia_blanca_latest.png?t=' + Date.now());
+      radarImg.src = 'https://www.climasurgba.com.ar/radar/bahia_blanca_latest.png?t=' + Date.now();
       radarImg.onerror = null; // Evitar loop infinito
     };
   }
@@ -391,6 +397,7 @@
 
 </body>
 </html>
+
 
 
 
