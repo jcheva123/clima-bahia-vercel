@@ -259,9 +259,9 @@
     ],
     summaries: {
       today: "0 mm",
-      month: "45 mm",
-      historicalNov: "57 mm",
-      yearly: "850 mm"
+      month: "21.5 mm",
+      historicalNov: "57.2 mm",
+      yearly: "999.6 mm"
     },
     precipRecords: [
       { datetime: "2025-11-17 12:00", cond: "Parcialmente nublado", rain: 0, source: "@meteobahia" },
@@ -285,7 +285,7 @@
       const today = data.forecast[0];
       const todayCard = document.querySelector('#today-card');
       if (todayCard) {
-        todayCard.querySelector('.today-icon').textContent = today.icon || '☁️'; // Default nublado
+        todayCard.querySelector('.today-icon').textContent = today.icon || '☁️';
         const minEl = todayCard.querySelector('.today-temps .min');
         const maxEl = todayCard.querySelector('.today-temps .max');
         if (minEl) minEl.textContent = `${today.min}°`;
@@ -363,19 +363,29 @@
     if (!radarImg) return;
 
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes() - (now.getMinutes() % 10)).padStart(2, '0'); // Redondea a múltiplo de 10 min
-    const seconds = '00';
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0'); // Minuto exacto
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
     const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
 
+    // Intentar la imagen más reciente conocida como base
+    const latestKnown = '20251119-104759'; // Última que confirmaste (10:47:59 UTC)
     const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${timestamp}.png?t=${Date.now()}`;
-    
+    const fallbackSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${latestKnown}.png?t=${Date.now()}`; // Fallback a 10:47:59
+
     radarImg.src = imgSrc;
     radarImg.alt = `Radar Bahía Blanca - Última imagen (${now.toLocaleTimeString('es-AR')})`;
-    console.log('Radar URL generada:', imgSrc);
+    console.log('Intentando radar:', imgSrc);
+
+    // Retry con fallback si falla
+    radarImg.onerror = () => {
+      console.log('Imagen no encontrada, usando fallback:', fallbackSrc);
+      radarImg.src = fallbackSrc;
+      radarImg.onerror = null; // Evitar loop infinito
+    };
   }
 
   window.onload = () => {
@@ -387,11 +397,12 @@
     updateTime();
     setInterval(updateTime, 1000);
     setInterval(loadData, 900000); // 15 min
-    setInterval(loadRadarImage, 10 * 60 * 1000); // 10 min para radar
+    setInterval(loadRadarImage, 2 * 60 * 1000); // 2 min para radar
   };
 </script>
 
 </body>
 </html>
+
 
 
