@@ -1,16 +1,22 @@
-// api/radar.js
 module.exports = async (req, res) => {
   try {
-    // Por ahora usamos una URL fija del radar de Bahía Blanca.
-    // Cuando quieras, la cambiamos para que sea automática.
-    const url = 'https://estaticos.smn.gob.ar/vmsr/radar/RMA10_240_ZH_CMAX_20251114_130223Z.png';
+    const response = await fetch('https://www.climasurgba.com.ar/radar/bahia_blanca');
+    const html = await response.text();
 
-    // Cabecera opcional (no es necesaria, pero no molesta)
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Extraer todos los nombres de archivos PNG con regex
+    const matches = html.match(/bahia_blanca-\d{8}-\d{6}\.png/g) || [];
 
-    res.status(200).json({ url });
+    // Ordenar alfabéticamente (los timestamps son sortable)
+    matches.sort();
+    const latest = matches[matches.length - 1];
+
+    if (latest) {
+      res.json({ latestUrl: `https://www.climasurgba.com.ar/radar/${latest}` });
+    } else {
+      res.status(500).json({ error: 'No radar image found' });
+    }
   } catch (err) {
-    console.error('Error en api/radar:', err);
-    res.status(500).json({ error: 'Error interno obteniendo radar SMN' });
+    console.error('API Error:', err);
+    res.status(500).json({ error: 'Error fetching radar page' });
   }
 };
