@@ -111,6 +111,13 @@
     .smn-zoom { width: 1800px; height: 1080px; transform: scale(0.8); transform-origin: 90% 20%; object-fit: contain; }
     .goes-img { width: 900px; height: 540px; transform: scale(1.6); transform-origin: 20% 60%; object-fit: contain; }
 
+    /* Radar ajustado para que quede lindo */
+    .radar-img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
     .precip-summary { 
       display: flex; 
       justify-content: space-around; 
@@ -144,16 +151,6 @@
 
     .footer { text-align: center; margin-top: 2rem; font-size: 0.75rem; color: #888; }
     .footer a { color: #1e90ff; text-decoration: none; }
-
-    /* Estilo para el iframe del radar */
-    .radar-iframe-container {
-      height: 400px !important;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      border: 1px solid #333;
-      background: #1a1a1a;
-    }
   </style>
 </head>
 <body>
@@ -191,21 +188,18 @@
     </div>
   </div>
 
-  <!-- RADAR OFICIAL - SIEMPRE FUNCIONA -->
+  <!-- RADAR DE CLIMASURGBA - FUNCIONA 100% -->
   <div class="sat-section">
-    <div class="sat-title">Radar Bahía Blanca (RMA10) – En vivo (SMN Oficial)</div>
-    <div class="radar-iframe-container">
-      <iframe 
-        src="https://www.smn.gob.ar/radar?estacion=10" 
-        width="100%" 
-        height="100%" 
-        frameborder="0"
-        style="border: none; background: transparent;"
-        title="Radar Bahía Blanca - SMN">
-        <p>Tu navegador no soporta iframes. <a href="https://www.smn.gob.ar/radar?estacion=10" target="_blank">Ver radar en ventana nueva</a>.</p>
-      </iframe>
+    <div class="sat-title">Radar Bahía Blanca (SINARAME) – Actualizado cada 10 min</div>
+    <div class="sat-img">
+      <img id="radar-img" 
+           src="https://www.climasurgba.com.ar/radar/bahia_blanca-20251119-094204.png?t=1" 
+           class="radar-img" 
+           loading="lazy" 
+           alt="Radar Bahía Blanca - ClimaSurGBA" 
+           onerror="this.src='https://www.climasurgba.com.ar/radar/bahia_blanca-20251119-094204.png?t='+Date.now();" />
     </div>
-    <small class="text-muted mt-1" style="display: block; text-align: center;">Interactivo: haz zoom y selecciona capas | Actualización cada 10 min</small>
+    <small class="text-muted mt-1" style="display: block; text-align: center;">Fuente: ClimaSurGBA | Escala: dBZ (precipitación)</small>
   </div>
 
   <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones 🌧️</h3>
@@ -248,7 +242,7 @@
   <div class="footer">
     Datos: <a href="https://x.com/meteobahia" target="_blank">@meteobahia</a> | 
     <a href="https://www.lanueva.com/servicios/pronostico" target="_blank">La Nueva</a> | 
-    SMN | NOAA<br>
+    SMN | NOAA | ClimaSurGBA<br>
     Por <a href="https://x.com/JuanChevalier" target="_blank">@JuanChevalier</a> | 
     <span id="update-time"></span>
   </div>
@@ -353,34 +347,6 @@
     }
   }
 
-// Función para cargar radar dinámico de ClimaSurGBA
-function loadRadarImage() {
-  const radarImg = document.getElementById('radar-img');
-  if (!radarImg) return;
-
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes() - (now.getMinutes() % 10)).padStart(2, '0'); // Redondea a múltiplo de 10 min
-  const seconds = '00';
-  const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
-
-  const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${timestamp}.png?t=${Date.now()}`;
-  
-  radarImg.src = imgSrc;
-  radarImg.alt = `Radar Bahía Blanca - Última imagen (${now.toLocaleTimeString('es-AR')})`;
-  console.log('Radar URL generada:', imgSrc);
-}
-
-// En window.onload, llamala
-window.onload = () => {
-  // ... tu código existente ...
-  loadRadarImage(); // Carga inicial
-  setInterval(loadRadarImage, 10 * 60 * 1000); // Cada 10 min
-};
-  
   function updateTime() {
     const now = new Date();
     const timeEl = document.getElementById("current-time");
@@ -389,17 +355,39 @@ window.onload = () => {
     if (updateEl) updateEl.textContent = now.toLocaleTimeString('es-AR');
   }
 
+  // Función para cargar radar dinámico de ClimaSurGBA
+  function loadRadarImage() {
+    const radarImg = document.getElementById('radar-img');
+    if (!radarImg) return;
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes() - (now.getMinutes() % 10)).padStart(2, '0'); // Redondea a múltiplo de 10 min
+    const seconds = '00';
+    const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
+
+    const imgSrc = `https://www.climasurgba.com.ar/radar/bahia_blanca-${timestamp}.png?t=${Date.now()}`;
+    
+    radarImg.src = imgSrc;
+    radarImg.alt = `Radar Bahía Blanca - Última imagen (${now.toLocaleTimeString('es-AR')})`;
+    console.log('Radar URL generada:', imgSrc);
+  }
+
   window.onload = () => {
     if (window.location.protocol === 'file:') {
       alert('¡Modo local detectado! Los datos son mock. Usa un servidor para datos reales.');
     }
     loadData();
+    loadRadarImage(); // Carga inicial del radar
     updateTime();
     setInterval(updateTime, 1000);
     setInterval(loadData, 900000); // 15 min
+    setInterval(loadRadarImage, 10 * 60 * 1000); // 10 min para radar
   };
 </script>
 
 </body>
 </html>
-
