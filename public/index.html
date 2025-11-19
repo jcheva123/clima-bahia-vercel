@@ -277,7 +277,9 @@
         console.warn('Modo local: Usando datos mock. Usa un servidor para datos reales.');
       } else {
         const res = await fetch('/api/data');
-        if (!res.ok) throw new Error('API error');
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status} - ${res.statusText}`);
+        }
         data = await res.json();
       }
 
@@ -343,9 +345,11 @@
         }
       }
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error al cargar datos:', err.message);
       if (window.location.protocol === 'file:') {
-        loadData(); // Retry con mock
+        loadData(); // Retry con mock en modo local
+      } else {
+        alert('Error al conectar con el servidor. Intenta de nuevo más tarde.');
       }
     }
   }
@@ -397,13 +401,14 @@
     loadRadarImage(); // Carga inicial del radar
     updateTime();
     setInterval(updateTime, 1000);
-    setInterval(loadData, 3600000); // 1 hora para pronóstico (ajustable)
+    setInterval(loadData, 3600000); // 1 hora para pronóstico
     setInterval(loadRadarImage, 2 * 60 * 1000); // 2 min para radar
   };
 </script>
 
 </body>
 </html>
+
 
 
 
