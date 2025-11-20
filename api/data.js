@@ -34,13 +34,51 @@ function getTodayLocalISO() {
       obj[p.type] = p.value;
     }
   }
-  // en-CA → "YYYY-MM-DD"
   return `${obj.year}-${obj.month}-${obj.day}`;
+}
+
+// Intenta leer los datos de precipitaciones desde La Nueva.
+// Si falla, devuelve valores de respaldo.
+async function fetchLaNuevaPrecip() {
+  const fallback = {
+    monthly_mm: 21.5,
+    historical_nov: 57.2,
+    yearly_mm: 999.6,
+  };
+
+  try {
+    const res = await fetch("https://www.lanueva.com/servicios/pronostico");
+    if (!res.ok) {
+      console.error("La Nueva HTTP error:", res.status, res.statusText);
+      return fallback;
+    }
+    const html = await res.text();
+
+    const monthMatch = html.match(/En el mes\s*([\d.,]+)\s*mm/i);
+    const histMatch  = html.match(/Media hist[óo]rica\s*([\d.,]+)\s*mm/i);
+    const yearMatch  = html.match(/En el a[ñn]o\s*([\d.,]+)\s*mm/i);
+
+    const parseNum = (str) => {
+      if (!str) return null;
+      // quita separador de miles ".", cambia coma por punto
+      const cleaned = str.replace(/\./g, "").replace(",", ".");
+      const n = parseFloat(cleaned);
+      return isNaN(n) ? null : n;
+    };
+
+    const monthly_mm    = parseNum(monthMatch && monthMatch[1]) ?? fallback.monthly_mm;
+    const historical_nov = parseNum(histMatch && histMatch[1]) ?? fallback.historical_nov;
+    const yearly_mm     = parseNum(yearMatch && yearMatch[1]) ?? fallback.yearly_mm;
+
+    return { monthly_mm, historical_nov, yearly_mm };
+  } catch (err) {
+    console.error("Error leyendo La Nueva:", err);
+    return fallback;
+  }
 }
 
 module.exports = async (req, res) => {
   try {
-    // Llamada a Open-Meteo con daily + hourly + current
     const url =
       "https://api.open-meteo.com/v1/forecast" +
       `?latitude=${LAT}&longitude=${LON}` +
@@ -65,20 +103,19 @@ module.exports = async (req, res) => {
     }
 
     // ---- LOCALIZAR HOY EN daily.time ----
-    const todayLocalStr = getTodayLocalISO(); // ej: "2025-11-20"
+    const todayLocalStr = getTodayLocalISO();
     let idxToday = daily.time.findIndex((t) => t === todayLocalStr);
     if (idxToday === -1) {
-      // fallback por si algo raro pasa → usamos el índice 0
       idxToday = 0;
     }
 
-    // ---- PRONÓSTICO: desde HOY (idxToday) los próximos 7 días ----
+    // ---- PRONÓSTICO: desde HOY los próximos 7 días ----
     const startIndex = idxToday;
     const endIndex = Math.min(startIndex + 7, daily.time.length);
     const forecast = [];
 
     for (let idx = startIndex; idx < endIndex; idx++) {
-      const dateStr = daily.time[idx]; // "YYYY-MM-DD"
+      const dateStr = daily.time[idx];
       const d = new Date(dateStr + "T00:00:00");
       const dayName = d.toLocaleDateString("es-AR", { weekday: "long" });
       const dateShort = d.toLocaleDateString("es-AR", {
@@ -95,35 +132,33 @@ module.exports = async (req, res) => {
           : 0;
 
       forecast.push({
-        day: dayName,      // ej: "jueves"
-        date: dateShort,   // ej: "20/11"
-        min,               // °C
-        max,               // °C
-        cond: text,        // ej: "Parcialmente nublado"
-        icon,              // emoji
+        day: dayName,
+        date: dateShort,
+        min,
+        max,
+        cond: text,
+        icon,
         rain: `${rainMm.toFixed(1)} mm`,
       });
     }
 
     // ---- REGISTROS RECIENTES (últimos 5 horarios) ----
     const hourlyRecords = (hourly.time || []).map((t, idx) => ({
-      iso: t, // "2025-11-20T12:00"
+      iso: t,
       rain: hourly.precipitation[idx],
       code: hourly.weathercode[idx],
     }));
 
-    // Tomamos SIEMPRE los últimos 5 registros horarios disponibles
     const last5 = hourlyRecords.slice(-5).reverse();
 
     const precipRecords = last5.map((r) => {
-      // r.iso viene ya en hora local de Bahía Blanca gracias a timezone=...
-      const [datePart, timePart] = r.iso.split("T"); // "YYYY-MM-DD", "HH:MM"
+      const [datePart, timePart] = r.iso.split("T");
       const [year, month, day] = datePart.split("-");
       const hhmm = timePart.slice(0, 5);
       const { text } = describeWeather(r.code);
 
       return {
-        datetime: `${year}-${month}-${day} ${hhmm}`, // lo que ya espera tu tabla
+        datetime: `${year}-${month}-${day} ${hhmm}`,
         cond: text,
         rain: typeof r.rain === "number" ? Number(r.rain.toFixed(1)) : 0,
         source: "Open-Meteo",
@@ -138,23 +173,16 @@ module.exports = async (req, res) => {
         : 0;
     const todayLabel = `${todayRainMm.toFixed(1)} mm`;
 
-    // Datos de La Nueva: siguen fijos por ahora
-    const laNuevaData = {
-      precip: {
-        monthly_mm: 21.5,      // Actualizado a mano
-        historical_nov: 57.2,  // Media histórica
-        yearly_mm: 999.6,      // Acumulado anual 2025
-      },
-    };
+    const laNuevaData = await fetchLaNuevaPrecip();
 
     res.json({
       forecast,
       precipRecords,
       summaries: {
-        today: todayLabel,                                   // "Último registro (Meteo)" → lluvia de hoy
-        month: `${laNuevaData.precip.monthly_mm} mm`,        // Mes (La Nueva)
-        historicalNov: `${laNuevaData.precip.historical_nov} mm`,
-        yearly: `${laNuevaData.precip.yearly_mm} mm`,
+        today: todayLabel,
+        month: `${laNuevaData.monthly_mm} mm`,
+        historicalNov: `${laNuevaData.historical_nov} mm`,
+        yearly: `${laNuevaData.yearly_mm} mm`,
       },
     });
   } catch (err) {
