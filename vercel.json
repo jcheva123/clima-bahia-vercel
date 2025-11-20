@@ -19,11 +19,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "functions": {
-    "api/data.js": {
-      "memory": 2048,
-      "maxDuration": 60
-    }
-  }
+  ]
 }
