@@ -77,15 +77,51 @@ async function fetchLaNuevaPrecip() {
 
 // Lee el último "Lluv:3.7 mm" de los posts de @meteobahia en X
 // Lee el último "Lluv:3.7 mm" de los posts de @meteobahia en X
+// Lee el último "Lluv:3.7 mm" de los posts de @meteobahia en X
 async function fetchMeteobahiaLluv() {
-  const urls = [
+  const regex = /Lluv:\s*([\d.,]+)\s*mm/i;
+
+  // 1) Intento con un endpoint de timeline (JSON embebido de X)
+  const timelineUrls = [
+    "https://cdn.syndication.twimg.com/timeline/profile?screen_name=meteobahia&count=20"
+  ];
+
+  for (const url of timelineUrls) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; ClimaBahiaBot/1.0; +https://clima-bahia-vercel.vercel.app)",
+        },
+      });
+
+      if (!res.ok) {
+        console.error("Meteobahia timeline HTTP error:", url, res.status, res.statusText);
+      } else {
+        let text = await res.text();
+        // colapsar espacios por las dudas
+        text = text.replace(/\s+/g, " ");
+        const match = regex.exec(text);
+        if (match && match[1]) {
+          const num = parseFloat(match[1].replace(",", "."));
+          if (!isNaN(num)) {
+            console.log("Lluv desde Meteobahia (timeline):", num, "mm");
+            return num;
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error leyendo timeline Meteobahia:", url, err);
+    }
+  }
+
+  // 2) Si lo anterior no funcionó, intento con HTML normal
+  const htmlUrls = [
     "https://x.com/meteobahia",
     "https://mobile.twitter.com/meteobahia",
   ];
 
-  const regex = /Lluv:\s*([\d.,]+)\s*mm/i;
-
-  for (const url of urls) {
+  for (const url of htmlUrls) {
     try {
       const res = await fetch(url, {
         headers: {
@@ -99,36 +135,36 @@ async function fetchMeteobahiaLluv() {
         continue;
       }
 
-      const html = await res.text();
+      let html = await res.text();
 
-      // 1) Sacar scripts y styles
+      // sacar scripts y styles
       let text = html
         .replace(/<script[\s\S]*?<\/script>/gi, " ")
         .replace(/<style[\s\S]*?<\/style>/gi, " ");
 
-      // 2) Sacar TODAS las etiquetas HTML
+      // sacar etiquetas HTML
       text = text.replace(/<[^>]+>/g, " ");
 
-      // 3) Colapsar espacios
+      // colapsar espacios
       text = text.replace(/\s+/g, " ");
 
-      // 4) Buscar "Lluv: 8.8 mm"
       const match = regex.exec(text);
       if (match && match[1]) {
         const num = parseFloat(match[1].replace(",", "."));
         if (!isNaN(num)) {
-          console.log("Lluv desde Meteobahia:", num, "mm");
+          console.log("Lluv desde Meteobahia (HTML):", num, "mm");
           return num;
         }
       }
     } catch (err) {
-      console.error("Error leyendo Meteobahia:", url, err);
+      console.error("Error leyendo Meteobahia HTML:", url, err);
     }
   }
 
   // Si no encontramos nada, devolvemos null y se usa el backup Open-Meteo
   return null;
 }
+
 
 
 module.exports = async (req, res) => {
@@ -253,4 +289,5 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
 
