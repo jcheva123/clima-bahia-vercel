@@ -75,68 +75,54 @@ async function fetchLaNuevaPrecip() {
   }
 }
 
-// Actualizada: Usa endpoint de syndication más confiable y parsea JSON para extraer Lluv del post más reciente
+// Actualizada: Usa Puppeteer para scraping headless de la página de X
 async function fetchMeteobahiaLluv() {
+  const puppeteer = require('puppeteer');
+  const chromium = require('@sparticuz/chromium');
+
   const regex = /Lluv:\s*([\d.,]+)\s*mm/i;
 
-  const url = "https://syndication.twitter.com/srv/timeline-profile/screen-name/meteobahia";
-
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; ClimaBahiaBot/1.0; +https://clima-bahia-vercel.vercel.app)",
-      },
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     });
 
-    if (!res.ok) {
-      console.error("Syndication HTTP error:", res.status, res.statusText);
-      return null;
-    }
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-    let text = await res.text();
+    await page.goto('https://x.com/meteobahia', { waitUntil: 'networkidle2', timeout: 30000 });
 
-    // El response es JSONP-like, envuelto en paréntesis o similar; extraemos el JSON puro
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}') + 1;
-    if (start === -1 || end === -1) {
-      console.error("No JSON válido en syndication response");
-      return null;
-    }
+    // Espera a que carguen los posts (selector de tweets en X)
+    await page.waitForSelector('article[data-testid="tweet"]', { timeout: 15000 });
 
-    const jsonStr = text.substring(start, end);
-    let data;
-    try {
-      data = JSON.parse(jsonStr);
-    } catch (parseErr) {
-      console.error("Error parseando JSON de syndication:", parseErr);
-      return null;
-    }
+    // Extrae el texto de los primeros 5 posts (el primero es el más reciente)
+    const texts = await page.evaluate(() => {
+      const posts = Array.from(document.querySelectorAll('article[data-testid="tweet"] div[data-testid="tweetText"]'));
+      return posts.slice(0, 5).map(post => post.innerText);
+    });
 
-    // Estructura típica: data.props.pageProps.timeline.entries (array de posts, el [0] es el más reciente)
-    const entries = data?.props?.pageProps?.timeline?.entries || [];
+    await browser.close();
 
-    if (entries.length === 0) {
-      console.error("No entries en timeline");
-      return null;
-    }
-
-    // Itera de más reciente a más antiguo hasta encontrar el valor
-    for (const entry of entries) {
-      const fullText = entry?.content?.tweet?.full_text || entry?.content?.itemContent?.tweet_results?.result?.legacy?.full_text || '';
-      const match = regex.exec(fullText);
+    // Busca de más reciente a más antiguo
+    for (const text of texts) {
+      const match = regex.exec(text);
       if (match && match[1]) {
         const num = parseFloat(match[1].replace(',', '.'));
         if (!isNaN(num)) {
-          console.log("Lluv desde Meteobahia (syndication):", num, "mm");
+          console.log("Lluv desde Meteobahia (puppeteer):", num, "mm");
           return num;
         }
       }
     }
 
-    console.error("No Lluv encontrado en los posts recientes");
+    console.warn("No Lluv encontrado en posts recientes");
     return null;
   } catch (err) {
-    console.error("Error en fetch syndication:", err);
+    console.error("Error en Puppeteer:", err);
     return null;
   }
 }
