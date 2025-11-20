@@ -75,7 +75,7 @@ async function fetchLaNuevaPrecip() {
   }
 }
 
-// Actualizada: Usa Puppeteer para scraping headless de la página de X
+// Actualizada: Usa Puppeteer con anti-detección y más wait para scraping
 async function fetchMeteobahiaLluv() {
   const puppeteer = require('puppeteer');
   const chromium = require('@sparticuz/chromium');
@@ -84,7 +84,13 @@ async function fetchMeteobahiaLluv() {
 
   try {
     const browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-blink-features=AutomationControlled',
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
@@ -92,18 +98,36 @@ async function fetchMeteobahiaLluv() {
     });
 
     const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-    await page.goto('https://x.com/meteobahia', { waitUntil: 'networkidle2', timeout: 30000 });
+    // Anti-detección: Ocultar webdriver y set User-Agent
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      Object.defineProperty(navigator, 'languages', { get: () => ['es-AR', 'es'] });
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+    });
 
-    // Espera a que carguen los posts (selector de tweets en X)
-    await page.waitForSelector('article[data-testid="tweet"]', { timeout: 15000 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'es-AR,es;q=0.9',
+    });
 
-    // Extrae el texto de los primeros 5 posts (el primero es el más reciente)
+    console.log('Navegando a https://x.com/meteobahia...');
+    await page.goto('https://x.com/meteobahia', { waitUntil: 'networkidle2', timeout: 60000 });
+
+    // Espera más tiempo para que carguen los posts
+    await page.waitForSelector('article[data-testid="tweet"]', { timeout: 30000 });
+
+    // Scroll para cargar más si es necesario
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 2));
+    await page.waitForTimeout(5000); // Espera 5s extra para render
+
+    // Extrae texto de los primeros 10 posts (para cubrir)
     const texts = await page.evaluate(() => {
       const posts = Array.from(document.querySelectorAll('article[data-testid="tweet"] div[data-testid="tweetText"]'));
-      return posts.slice(0, 5).map(post => post.innerText);
+      return posts.slice(0, 10).map(post => post.innerText || '');
     });
+
+    console.log('Posts extraídos:', texts.length);
 
     await browser.close();
 
@@ -122,14 +146,14 @@ async function fetchMeteobahiaLluv() {
     console.warn("No Lluv encontrado en posts recientes");
     return null;
   } catch (err) {
-    console.error("Error en Puppeteer:", err);
+    console.error("Error en Puppeteer:", err.message);
     return null;
   }
 }
 
 module.exports = async (req, res) => {
   try {
-    // Llamada a Open-Meteo
+    // Llamada a Open-Meteo (sin cambios)
     const url =
       "https://api.open-meteo.com/v1/forecast" +
       `?latitude=${LAT}&longitude=${LON}` +
