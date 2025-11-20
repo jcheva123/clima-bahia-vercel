@@ -76,6 +76,7 @@ async function fetchLaNuevaPrecip() {
 }
 
 // Lee el último "Lluv:3.7 mm" de los posts de @meteobahia en X
+// Lee el último "Lluv:3.7 mm" de los posts de @meteobahia en X
 async function fetchMeteobahiaLluv() {
   const urls = [
     "https://x.com/meteobahia",
@@ -92,16 +93,32 @@ async function fetchMeteobahiaLluv() {
             "Mozilla/5.0 (compatible; ClimaBahiaBot/1.0; +https://clima-bahia-vercel.vercel.app)",
         },
       });
+
       if (!res.ok) {
         console.error("Meteobahia HTTP error:", url, res.status, res.statusText);
         continue;
       }
+
       const html = await res.text();
-      const match = regex.exec(html);
+
+      // 1) Sacar scripts y styles
+      let text = html
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ");
+
+      // 2) Sacar TODAS las etiquetas HTML
+      text = text.replace(/<[^>]+>/g, " ");
+
+      // 3) Colapsar espacios
+      text = text.replace(/\s+/g, " ");
+
+      // 4) Buscar "Lluv: 8.8 mm"
+      const match = regex.exec(text);
       if (match && match[1]) {
         const num = parseFloat(match[1].replace(",", "."));
         if (!isNaN(num)) {
-          return num; // mm del último post con Lluv:
+          console.log("Lluv desde Meteobahia:", num, "mm");
+          return num;
         }
       }
     } catch (err) {
@@ -109,9 +126,10 @@ async function fetchMeteobahiaLluv() {
     }
   }
 
-  // Si no encontramos nada, devolvemos null
+  // Si no encontramos nada, devolvemos null y se usa el backup Open-Meteo
   return null;
 }
+
 
 module.exports = async (req, res) => {
   try {
@@ -235,3 +253,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
