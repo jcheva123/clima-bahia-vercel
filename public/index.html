@@ -8,172 +8,333 @@
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <style>
     * { box-sizing: border-box; }
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      margin: 0; 
-      padding: 1rem; 
-      background: #121212; 
-      color: #e0e0e0; 
-    }
-    .header-mobile { 
-      text-align: center; 
-      margin-bottom: 1rem; 
-      background: #1e90ff; 
-      color: white; 
-      padding: 0.75rem; 
-      border-radius: 12px; 
-    }
-    .header-mobile h1 { 
-      margin: 0; 
-      font-size: 1.4rem; 
-      font-weight: 600; 
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #121212;
+      color: #e0e0e0;
     }
 
-.today-card { 
-  background: #1e1e1e; 
-  border-radius: 16px; 
-  padding: 1.5rem; 
-  text-align: center; 
-  box-shadow: 0 6px 16px rgba(0,0,0,0.3); 
-  margin-bottom: 1.5rem; 
-  border: 1px solid #333;
-}
-.today-icon { 
-  font-size: 3.5rem; 
-  margin-bottom: 0.5rem; 
-}
-.today-temps { 
-  font-size: 2.2rem; 
-  font-weight: 300; 
-}
-.today-temps .min { 
-  color: #aaa; 
-}
-.today-temps .max { 
-  font-weight: 600; 
-}
-.text-muted { 
-  color: #ccc !important; 
-}
-.current-time { 
-  font-size: 1.2rem; 
-  color: #aaa; 
-  margin-top: 0.25rem; 
-}
+    /* BARRA SUPERIOR */
+    .header-mobile {
+      text-align: left;
+      margin-bottom: 1rem;
+      padding: 0.9rem 1rem;
+      border-radius: 14px;
+      background: linear-gradient(90deg, #007bff, #00b4ff);
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    }
+    .header-mobile h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .header-subtitle {
+      margin: .25rem 0 0;
+      font-size: .8rem;
+      opacity: .9;
+    }
 
-.forecast-small { 
-  display: flex; 
-  overflow-x: auto; 
-  gap: 0.75rem; 
-  padding-bottom: 0.5rem; 
-  margin-bottom: 1.5rem; 
-  scrollbar-width: thin;
-  scrollbar-color: #444 #1e1e1e;
-}
-.day-small { 
-  min-width: 65px; 
-  text-align: center; 
-  background: #1e1e1e; 
-  padding: 0.75rem 0.5rem; 
-  border-radius: 12px; 
-  font-size: 0.85rem; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-  flex-shrink: 0; 
-  border: 1px solid #333;
-}
-.day-small .icon { 
-  font-size: 1.4rem; 
-  display: block; 
-  margin-bottom: 0.25rem; 
-}
+    /* CONTENEDOR CLIMA ACTUAL + PRÓXIMOS DÍAS */
+    .hero-wrapper {
+      margin-bottom: 1.5rem;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+    @media (min-width: 768px) {
+      .hero-grid {
+        grid-template-columns: 3fr 2fr;
+        align-items: stretch;
+      }
+    }
 
-.sat-section { 
-  margin-bottom: 1.5rem; 
-}
-.sat-title { 
-  font-size: 1rem; 
-  font-weight: 600; 
-  margin-bottom: 0.5rem; 
-  color: #ccc; 
-}
-.sat-img, .goes-container { 
-  border-radius: 12px; 
-  overflow: hidden; 
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4); 
-  background: #1a1a1a; 
-  height: 300px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid #333;
-}
+    .today-card {
+      background: #1b1b1b;
+      border-radius: 18px;
+      padding: 1.2rem 1.3rem;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      border: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
 
-.smn-zoom { width: 1800px; height: 1080px; transform: scale(0.85); transform-origin: 105% 20%; object-fit: contain; }
-.goes-img { width: 900px; height: 540px; transform: scale(1.6); transform-origin: 20% 60%; object-fit: contain; }
+    .today-main {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
 
-/* Radar ajustado para que quede lindo */
-.radar-img {
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-}
+    .today-icon {
+      font-size: 3rem;
+      width: 3.2rem;
+      text-align: center;
+    }
 
-.precip-summary { 
-  display: flex; 
-  justify-content: space-around; 
-  margin-bottom: 1rem; 
-  flex-wrap: wrap; 
-  gap: 0.5rem; 
-}
-.precip-card { 
-  background: #1e1e1e; 
-  padding: 0.75rem; 
-  border-radius: 12px; 
-  text-align: center; 
-  flex: 1; 
-  min-width: 80px; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-  border: 1px solid #333;
-}
-.precip-card h5 { margin: 0; font-size: 0.8rem; color: #aaa; }
-.precip-card h3 { margin: 0.25rem 0 0; font-size: 1.1rem; font-weight: 600; color: #fff; }
+    .today-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
 
-.table-container { 
-  overflow-x: auto; 
-  border-radius: 12px; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
-  border: 1px solid #333;
-}
-.table { margin: 0; font-size: 0.85rem; background: #1e1e1e; color: #e0e0e0; }
-.table th { font-weight: 600; background: #252525; color: #ccc; }
-.table td { vertical-align: middle; border-color: #333; }
-.table-hover tbody tr:hover { background-color: #2a2a2a; }
+    .today-temps {
+      font-size: 2.1rem;
+      font-weight: 300;
+      line-height: 1.1;
+    }
+    .today-temps .min {
+      color: #aaa;
+      font-weight: 400;
+      margin-right: 0.4rem;
+    }
+    .today-temps .max {
+      font-weight: 700;
+    }
 
-.footer { text-align: center; margin-top: 2rem; font-size: 0.75rem; color: #888; }
-.footer a { color: #1e90ff; text-decoration: none; }  </style></head>
+    .text-muted {
+      color: #ccc !important;
+    }
+    .current-time {
+      font-size: 1rem;
+      color: #aaa;
+    }
+
+    /* PANEL PRÓXIMOS DÍAS */
+    .forecast-panel {
+      background: #181818;
+      border-radius: 18px;
+      padding: 1rem 1rem 0.7rem;
+      border: 1px solid #333;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+    }
+    .forecast-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0 0 .6rem;
+      color: #ddd;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .forecast-small {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      padding-bottom: 0.5rem;
+      max-height: 260px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #444 #181818;
+    }
+
+    .day-small {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 0.7rem;
+      border-radius: 12px;
+      background: radial-gradient(circle at top left, #262626, #151515);
+      border: 1px solid #2f2f2f;
+      font-size: 0.85rem;
+    }
+    .day-left {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .day-small .icon {
+      font-size: 1.25rem;
+      width: 1.5rem;
+      text-align: center;
+    }
+    .day-name {
+      text-transform: lowercase;
+    }
+    .day-name::first-letter {
+      text-transform: uppercase;
+    }
+    .day-date {
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+    .day-temps {
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: right;
+      min-width: 64px;
+    }
+    .day-temps span {
+      display: block;
+      line-height: 1.1;
+    }
+    .day-temps .min {
+      color: #aaa;
+      font-weight: 400;
+    }
+    .day-temps .max {
+      font-weight: 600;
+    }
+
+    /* SATÉLITES */
+    .sat-section {
+      margin-bottom: 1.5rem;
+    }
+    .sat-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+    }
+    .sat-img, .goes-container {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      background: #1a1a1a;
+      height: 300px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #333;
+    }
+
+    .smn-zoom {
+      width: 1800px;
+      height: 1080px;
+      transform: scale(0.8);
+      transform-origin: 90% 20%;
+      object-fit: contain;
+    }
+    .goes-img {
+      width: 900px;
+      height: 540px;
+      transform: scale(1.6);
+      transform-origin: 20% 60%;
+      object-fit: contain;
+    }
+
+    .radar-img {
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+    }
+
+    /* PRECIPITACIONES */
+    .precip-summary {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .precip-card {
+      background: #1e1e1e;
+      padding: 0.75rem;
+      border-radius: 12px;
+      text-align: center;
+      flex: 1;
+      min-width: 80px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border: 1px solid #333;
+    }
+    .precip-card h5 {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .precip-card h3 {
+      margin: 0.25rem 0 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      border: 1px solid #333;
+    }
+    .table {
+      margin: 0;
+      font-size: 0.85rem;
+      background: #1e1e1e;
+      color: #e0e0e0;
+    }
+    .table th {
+      font-weight: 600;
+      background: #252525;
+      color: #ccc;
+    }
+    .table td {
+      vertical-align: middle;
+      border-color: #333;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #2a2a2a;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .footer a {
+      color: #1e90ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
 <body>
 
   <div class="header-mobile">
     <h1>Clima Bahía Blanca</h1>
+    <p class="header-subtitle">Bahía Blanca · datos actualizados en vivo</p>
   </div>
 
-  <div class="today-card" id="today-card">
-    <div class="today-icon">Cargando...</div>
-    <div class="today-temps">
-      <span class="min">—</span>
-      <strong class="mx-2 max">—</strong>
+  <!-- CLIMA ACTUAL + PRÓXIMOS DÍAS -->
+  <div class="hero-wrapper">
+    <div class="hero-grid">
+      <!-- HOY -->
+      <section class="today-card" id="today-card">
+        <div class="today-main">
+          <div class="today-icon">⏳</div>
+          <div class="today-info">
+            <div class="today-temps">
+              <span class="min">—</span>
+              <strong class="max">—</strong>
+            </div>
+            <div class="text-muted" id="current-date">—</div>
+            <div class="current-time" id="current-time">HH:MM</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRÓXIMOS DÍAS -->
+      <section class="forecast-panel">
+        <h2 class="forecast-title">Próximos días</h2>
+        <div class="forecast-small" id="forecast-small">
+          <!-- Se llena por JS -->
+        </div>
+      </section>
     </div>
-    <div class="text-muted" id="current-date">—</div>
-    <div class="current-time" id="current-time">HH:MM</div>
   </div>
-
-  <div class="forecast-small" id="forecast-small"></div>
 
   <!-- SATÉLITES -->
   <div class="sat-section">
     <div class="sat-title">Topes Nubosos (SMN)</div>
     <div class="sat-img">
-      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/latest.jpg" 
+      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/latest.jpg"
            class="smn-zoom" loading="lazy" alt="SMN Topes Nubosos" />
     </div>
   </div>
@@ -181,29 +342,31 @@
   <div class="sat-section">
     <div class="sat-title">Masas de Aire (GOES-19)</div>
     <div class="goes-container">
-      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/AirMass/GOES19-SSA-AirMass-900x540.gif" 
+      <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/AirMass/GOES19-SSA-AirMass-900x540.gif"
            class="goes-img" loading="lazy" alt="GOES-19 AirMass">
     </div>
   </div>
 
-<!-- RADAR DE CLIMASURGBA - FUNCIONA 100% -->
-<div class="sat-section">
-  <div class="sat-title">Radar Bahía Blanca (Rocket)</div>
-  <div class="sat-img">
-    <img id="radar-img" 
-         src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
-         class="radar-img" 
-         loading="lazy" 
-         alt="Radar Bahía Blanca - Cargando última imagen..." />
+  <!-- RADAR -->
+  <div class="sat-section">
+    <div class="sat-title">Radar Bahía Blanca (SINARAME) – Actualizado cada 5 min</div>
+    <div class="sat-img">
+      <img id="radar-img"
+           src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+           class="radar-img"
+           loading="lazy"
+           alt="Radar Bahía Blanca - Cargando última imagen..." />
+    </div>
+    <small class="text-muted mt-1" style="display: block; text-align: center;">
+      Fuente: ClimaSurGBA | Escala: dBZ (precipitación)
+    </small>
   </div>
-  <small class="text-muted mt-1" style="display: block; text-align: center;">Fuente: ClimaSurGBA | Escala: dBZ (precipitación)</small>
-</div>
 
-  <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones </h3>
+  <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones</h3>
 
   <div class="precip-summary">
     <div class="precip-card">
-      <h5>Último registro (Meteo)</h5>
+      <h5>Último registro (día)</h5>
       <h3 id="today-rain">—</h3>
     </div>
     <div class="precip-card">
@@ -237,9 +400,10 @@
   </div>
 
   <div class="footer">
-    Datos: <a href="https://x.com/meteobahia" target="_blank">@meteobahia</a> | 
-    <a href="https://www.lanueva.com/servicios/pronostico" target="_blank">La Nueva</a> | 
-    SMN | NOAA | ClimaSurGBA<br>
+    Datos:
+    <a href="https://x.com/meteobahia" target="_blank">@meteobahia</a> ·
+    <a href="https://www.lanueva.com/servicios/pronostico" target="_blank">La Nueva</a> ·
+    SMN · NOAA · ClimaSurGBA<br>
     <span id="update-time"></span>
   </div>
 
@@ -247,16 +411,16 @@
   // Mock data para pruebas locales (comenta si usas servidor)
   const mockData = {
     forecast: [
-      { day: "Domingo", date: "17/11", min: 18, max: 28, icon: "" },
-      { day: "Lunes", date: "18/11", min: 16, max: 27, icon: "" },
-      { day: "Martes", date: "19/11", min: 17, max: 29, icon: "" },
-      { day: "Miércoles", date: "20/11", min: 15, max: 26, icon: "" },
-      { day: "Jueves", date: "21/11", min: 19, max: 31, icon: "" },
-      { day: "Viernes", date: "22/11", min: 20, max: 30, icon: "" },
-      { day: "Sábado", date: "23/11", min: 18, max: 28, icon: "" }
+      { day: "Domingo", date: "17/11", min: 18, max: 28, icon: "⛅" },
+      { day: "Lunes",   date: "18/11", min: 16, max: 27, icon: "🌤️" },
+      { day: "Martes",  date: "19/11", min: 17, max: 29, icon: "🌧️" },
+      { day: "Miércoles", date: "20/11", min: 15, max: 26, icon: "☁️" },
+      { day: "Jueves",  date: "21/11", min: 19, max: 31, icon: "🌤️" },
+      { day: "Viernes", date: "22/11", min: 20, max: 30, icon: "🌧️" },
+      { day: "Sábado",  date: "23/11", min: 18, max: 28, icon: "⛅" }
     ],
     summaries: {
-      today: "0 mm",
+      today: "0.0 mm",
       month: "21.6 mm",
       historicalNov: "57.2 mm",
       yearly: "999.6 mm"
@@ -282,11 +446,14 @@
       const today = data.forecast[0];
       const todayCard = document.querySelector('#today-card');
       if (todayCard) {
-        todayCard.querySelector('.today-icon').textContent = today.icon;
+        const iconEl = todayCard.querySelector('.today-icon');
+        if (iconEl) iconEl.textContent = today.icon || '⛅';
+
         const minEl = todayCard.querySelector('.today-temps .min');
         const maxEl = todayCard.querySelector('.today-temps .max');
         if (minEl) minEl.textContent = `${today.min}°`;
         if (maxEl) maxEl.textContent = `${today.max}°`;
+
         const dateEl = document.getElementById('current-date');
         if (dateEl) dateEl.textContent = `${today.day} ${today.date}`;
       }
@@ -298,9 +465,17 @@
         future.forEach(d => {
           container.innerHTML += `
             <div class="day-small">
-              <div class="icon">${d.icon}</div>
-              <div>${d.day.slice(0,3)}</div>
-              <div><strong>${d.min}°</strong>/${d.max}°</div>
+              <div class="day-left">
+                <div class="icon">${d.icon || ''}</div>
+                <div>
+                  <div class="day-name">${d.day.slice(0,3)}</div>
+                  <div class="day-date">${d.date}</div>
+                </div>
+              </div>
+              <div class="day-temps">
+                <span class="max">${d.max}°</span>
+                <span class="min">${d.min}°</span>
+              </div>
             </div>`;
         });
       }
@@ -338,7 +513,8 @@
     } catch (err) {
       console.error('Error:', err);
       if (window.location.protocol === 'file:') {
-        loadData(); // Retry con mock
+        // en local, usamos siempre mock si falla
+        const data = mockData;
       }
     }
   }
@@ -356,7 +532,7 @@
     if (!radarImg) return;
 
     try {
-     const res = await fetch('/api/radar');
+      const res = await fetch('/api/radar');
       if (!res.ok) throw new Error('API radar error');
       const data = await res.json();
       radarImg.src = data.latestUrl + `?t=${Date.now()}`;
@@ -364,26 +540,22 @@
       console.log('Radar actualizado:', data.latestUrl);
     } catch (err) {
       console.error('Error fetching latest radar:', err);
-      // Fallback a imagen reciente conocida
+      // Fallback a una imagen conocida
       radarImg.src = 'https://www.climasurgba.com.ar/radar/bahia_blanca-20251119-132703.png?t=' + Date.now();
     }
   }
 
   window.onload = () => {
     if (window.location.protocol === 'file:') {
-      alert('¡Modo local detectado! Los datos son mock y el radar aproximado. Usa un servidor local (ej. Node/Express) o Vercel para versión completa.');
+      alert('¡Modo local detectado! Los datos son mock y el radar aproximado. Usa un servidor o Vercel para versión completa.');
     }
     loadData();
-    loadRadarImage(); // Carga inicial
+    loadRadarImage();
     updateTime();
     setInterval(updateTime, 1000);
-    setInterval(loadData, 900000); // 15 min
-    setInterval(loadRadarImage, 300000); // 5 min para radar
+    setInterval(loadData, 900000);     // 15 min
+    setInterval(loadRadarImage, 300000); // 5 min radar
   };
 </script>
 </body>
 </html>
-
-
-
-
