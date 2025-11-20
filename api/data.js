@@ -75,69 +75,58 @@ async function fetchLaNuevaPrecip() {
   }
 }
 
-// Actualizada: Usa Puppeteer con anti-detección y más wait para scraping
+// Actualizada: Usa syndication endpoint de X para extraer Lluv del post más reciente
 async function fetchMeteobahiaLluv() {
-  const puppeteer = require('puppeteer');
-  const chromium = require('@sparticuz/chromium');
-
   const regex = /Lluv:\s*([\d.,]+)\s*mm/i;
+  const url = 'https://syndication.twitter.com/srv/timeline-profile/screen-name/meteobahia?limit=20';
 
   try {
-    const browser = await puppeteer.launch({
-      args: [
-        ...chromium.args,
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-blink-features=AutomationControlled',
-      ],
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-      ignoreHTTPSErrors: true,
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; ClimaBahiaBot/1.0; +https://clima-bahia-vercel.vercel.app)',
+      },
     });
 
-    const page = await browser.newPage();
+    if (!res.ok) {
+      console.error("Syndication HTTP error:", res.status, res.statusText);
+      return null;
+    }
 
-    // Anti-detección: Ocultar webdriver y set User-Agent
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-      Object.defineProperty(navigator, 'languages', { get: () => ['es-AR', 'es'] });
-      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-    });
+    const text = await res.text();
 
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-    await page.setExtraHTTPHeaders({
-      'Accept-Language': 'es-AR,es;q=0.9',
-    });
+    // Extrae JSON del response (a veces envuelto en HTML/JS)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error("No JSON en syndication response");
+      return null;
+    }
 
-    console.log('Navegando a https://x.com/meteobahia...');
-    await page.goto('https://x.com/meteobahia', { waitUntil: 'networkidle2', timeout: 60000 });
+    let data;
+    try {
+      data = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.error("Error parseando JSON:", e);
+      return null;
+    }
 
-    // Espera más tiempo para que carguen los posts
-    await page.waitForSelector('article[data-testid="tweet"]', { timeout: 30000 });
+    // Entries están en data.props.pageProps.timeline.entries
+    const entries = data?.props?.pageProps?.timeline?.entries || [];
+    if (entries.length === 0) {
+      console.error("No entries en timeline");
+      return null;
+    }
 
-    // Scroll para cargar más si es necesario
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 2));
-    await page.waitForTimeout(5000); // Espera 5s extra para render
-
-    // Extrae texto de los primeros 10 posts (para cubrir)
-    const texts = await page.evaluate(() => {
-      const posts = Array.from(document.querySelectorAll('article[data-testid="tweet"] div[data-testid="tweetText"]'));
-      return posts.slice(0, 10).map(post => post.innerText || '');
-    });
-
-    console.log('Posts extraídos:', texts.length);
-
-    await browser.close();
-
-    // Busca de más reciente a más antiguo
-    for (const text of texts) {
-      const match = regex.exec(text);
+    // Itera posts de reciente a antiguo
+    for (const entry of entries) {
+      // Full text puede estar en diferentes paths (legacy o directo)
+      const fullText = entry?.content?.itemContent?.tweet_results?.result?.legacy?.full_text ||
+                       entry?.content?.tweet?.full_text ||
+                       '';
+      const match = regex.exec(fullText);
       if (match && match[1]) {
         const num = parseFloat(match[1].replace(',', '.'));
         if (!isNaN(num)) {
-          console.log("Lluv desde Meteobahia (puppeteer):", num, "mm");
+          console.log("Lluv desde Meteobahia (syndication):", num, "mm");
           return num;
         }
       }
@@ -146,14 +135,14 @@ async function fetchMeteobahiaLluv() {
     console.warn("No Lluv encontrado en posts recientes");
     return null;
   } catch (err) {
-    console.error("Error en Puppeteer:", err.message);
+    console.error("Error en syndication fetch:", err);
     return null;
   }
 }
 
 module.exports = async (req, res) => {
   try {
-    // Llamada a Open-Meteo (sin cambios)
+    // Llamada a Open-Meteo
     const url =
       "https://api.open-meteo.com/v1/forecast" +
       `?latitude=${LAT}&longitude=${LON}` +
