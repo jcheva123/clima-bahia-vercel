@@ -209,27 +209,28 @@ module.exports = async (req, res) => {
         : 0;
 
     // La Nueva + Meteobahia en paralelo
-    const [laNuevaData, meteobahiaLluv] = await Promise.all([
-      fetchLaNuevaPrecip(),
-      fetchMeteobahiaLluv(),
-    ]);
+const [laNuevaData, meteobahiaLluv] = await Promise.all([
+  fetchLaNuevaPrecip(),
+  fetchMeteobahiaLluv(),
+]);
 
-    // Si Meteobahia devolvió algo, usamos eso; si no, usamos Open-Meteo
-    const todayValue = meteobahiaLluv != null ? meteobahiaLluv : todayRainMm;
-    const todayLabel = `${todayValue.toFixed(1)} mm`;
+// Log para ver en los logs de Vercel qué viene
+console.log("meteobahiaLluv:", meteobahiaLluv);
 
-    res.json({
-      forecast,
-      precipRecords,
-      summaries: {
-        today: todayLabel,                              // "Último registro (día)" → Lluv de Meteobahia si existe
-        month: `${laNuevaData.monthly_mm} mm`,          // Mes (La Nueva)
-        historicalNov: `${laNuevaData.historical_nov} mm`,
-        yearly: `${laNuevaData.yearly_mm} mm`,
-      },
-    });
-  } catch (err) {
-    console.error("API Error:", err);
-    res.status(500).json({ error: "Error interno" });
-  }
-};
+// Elegimos fuente y valor
+const todaySource = meteobahiaLluv != null ? "meteobahia" : "open-meteo";
+const todayValue = meteobahiaLluv != null ? meteobahiaLluv : todayRainMm;
+const todayLabel = `${todayValue.toFixed(1)} mm`;
+
+res.json({
+  forecast,
+  precipRecords,
+  summaries: {
+    today: todayLabel,
+    todaySource,                                  // <--- NUEVO
+    month: `${laNuevaData.monthly_mm} mm`,
+    historicalNov: `${laNuevaData.historical_nov} mm`,
+    yearly: `${laNuevaData.yearly_mm} mm`,
+  },
+});
+
