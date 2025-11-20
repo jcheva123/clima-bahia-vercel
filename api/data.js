@@ -75,67 +75,58 @@ async function fetchLaNuevaPrecip() {
   }
 }
 
-// Actualizada: Usa syndication endpoint de X para extraer Lluv del post más reciente
+// Actualizada: Usa Puppeteer con stealth para evadir detección
 async function fetchMeteobahiaLluv() {
+  const puppeteer = require('puppeteer-extra');
+  const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+  puppeteer.use(StealthPlugin());
+  const chromium = require('@sparticuz/chromium');
+
   const regex = /Lluv:\s*([\d.,]+)\s*mm/i;
-  const url = 'https://syndication.twitter.com/srv/timeline-profile/screen-name/meteobahia?limit=20';
 
   try {
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ClimaBahiaBot/1.0; +https://clima-bahia-vercel.vercel.app)',
-      },
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
     });
 
-    if (!res.ok) {
-      console.error("Syndication HTTP error:", res.status, res.statusText);
-      return null;
-    }
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36');
 
-    const text = await res.text();
+    await page.goto('https://x.com/meteobahia', { waitUntil: 'networkidle2', timeout: 30000 });
 
-    // Extrae JSON del response (a veces envuelto en HTML/JS)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("No JSON en syndication response");
-      return null;
-    }
+    // Espera a que carguen los posts
+    await page.waitForSelector('article[data-testid="tweet"]', { timeout: 15000 });
 
-    let data;
-    try {
-      data = JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      console.error("Error parseando JSON:", e);
-      return null;
-    }
+    // Scroll para cargar más
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+    await page.waitForTimeout(2000);
 
-    // Entries están en data.props.pageProps.timeline.entries
-    const entries = data?.props?.pageProps?.timeline?.entries || [];
-    if (entries.length === 0) {
-      console.error("No entries en timeline");
-      return null;
-    }
+    // Extrae texto de posts
+    const texts = await page.evaluate(() => {
+      const posts = Array.from(document.querySelectorAll('article[data-testid="tweet"] div[data-testid="tweetText"]'));
+      return posts.map(post => post.innerText);
+    });
 
-    // Itera posts de reciente a antiguo
-    for (const entry of entries) {
-      // Full text puede estar en diferentes paths (legacy o directo)
-      const fullText = entry?.content?.itemContent?.tweet_results?.result?.legacy?.full_text ||
-                       entry?.content?.tweet?.full_text ||
-                       '';
-      const match = regex.exec(fullText);
+    await browser.close();
+
+    // Busca el valor
+    for (const text of texts) {
+      const match = regex.exec(text);
       if (match && match[1]) {
         const num = parseFloat(match[1].replace(',', '.'));
         if (!isNaN(num)) {
-          console.log("Lluv desde Meteobahia (syndication):", num, "mm");
           return num;
         }
       }
     }
 
-    console.warn("No Lluv encontrado en posts recientes");
     return null;
   } catch (err) {
-    console.error("Error en syndication fetch:", err);
+    console.error('Error en Puppeteer:', err);
     return null;
   }
 }
@@ -154,24 +145,17 @@ module.exports = async (req, res) => {
 
     const response = await fetch(url);
     if (!response.ok) {
-      console.error("Open-Meteo HTTP error:", response.status, response.statusText);
       throw new Error("Open-Meteo error");
     }
 
     const meteo = await response.json();
-    if (!meteo.daily || !meteo.hourly || !meteo.current_weather) {
-      throw new Error("Respuesta incompleta de Open-Meteo");
-    }
-
     const daily = meteo.daily;
     const hourly = meteo.hourly;
 
-    // ---- LOCALIZAR HOY EN daily.time ----
     const todayLocalStr = getTodayLocalISO();
     let idxToday = daily.time.findIndex((t) => t === todayLocalStr);
     if (idxToday === -1) idxToday = 0;
 
-    // ---- PRONÓSTICO: desde HOY los próximos 7 días ----
     const startIndex = idxToday;
     const endIndex = Math.min(startIndex + 7, daily.time.length);
     const forecast = [];
@@ -188,10 +172,7 @@ module.exports = async (req, res) => {
       const min = Math.round(daily.temperature_2m_min[idx]);
       const max = Math.round(daily.temperature_2m_max[idx]);
       const { text, icon } = describeWeather(daily.weathercode[idx]);
-      const rainMm =
-        typeof daily.precipitation_sum[idx] === "number"
-          ? daily.precipitation_sum[idx]
-          : 0;
+      const rainMm = daily.precipitation_sum[idx] || 0;
 
       forecast.push({
         day: dayName,
@@ -204,8 +185,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // ---- REGISTROS RECIENTES (últimos 5 horarios) ----
-    const hourlyRecords = (hourly.time || []).map((t, idx) => ({
+    const hourlyRecords = hourly.time.map((t, idx) => ({
       iso: t,
       rain: hourly.precipitation[idx],
       code: hourly.weathercode[idx],
@@ -222,25 +202,17 @@ module.exports = async (req, res) => {
       return {
         datetime: `${year}-${month}-${day} ${hhmm}`,
         cond: text,
-        rain: typeof r.rain === "number" ? Number(r.rain.toFixed(1)) : 0,
+        rain: Number((r.rain || 0).toFixed(1)),
         source: "Open-Meteo",
       };
     });
 
-    // ---- LLUVIA DE HOY (Open-Meteo) ----
-    const todayRainMm =
-      daily.precipitation_sum &&
-      typeof daily.precipitation_sum[idxToday] === "number"
-        ? daily.precipitation_sum[idxToday]
-        : 0;
+    const todayRainMm = daily.precipitation_sum[idxToday] || 0;
 
-    // ---- La Nueva + Meteobahia EN PARALELO ----
     const [laNuevaData, meteobahiaLluv] = await Promise.all([
       fetchLaNuevaPrecip(),
       fetchMeteobahiaLluv(),
     ]);
-
-    console.log("meteobahiaLluv:", meteobahiaLluv);
 
     const todaySource = meteobahiaLluv != null ? "meteobahia" : "open-meteo";
     const todayValue = meteobahiaLluv != null ? meteobahiaLluv : todayRainMm;
@@ -250,15 +222,14 @@ module.exports = async (req, res) => {
       forecast,
       precipRecords,
       summaries: {
-        today: todayLabel,                          // lo que ve tu tarjeta
-        todaySource,                                // "meteobahia" o "open-meteo"
+        today: todayLabel,
+        todaySource,
         month: `${laNuevaData.monthly_mm} mm`,
         historicalNov: `${laNuevaData.historical_nov} mm`,
         yearly: `${laNuevaData.yearly_mm} mm`,
       },
     });
   } catch (err) {
-    console.error("API Error:", err);
     res.status(500).json({ error: "Error interno" });
   }
 };
