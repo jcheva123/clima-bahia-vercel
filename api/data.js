@@ -101,7 +101,7 @@ async function fetchMeteobahiaLluv() {
       if (match && match[1]) {
         const num = parseFloat(match[1].replace(",", "."));
         if (!isNaN(num)) {
-          return num; // mm desde el último post que menciona Lluv:
+          return num; // mm del último post con Lluv:
         }
       }
     } catch (err) {
@@ -115,6 +115,7 @@ async function fetchMeteobahiaLluv() {
 
 module.exports = async (req, res) => {
   try {
+    // Llamada a Open-Meteo
     const url =
       "https://api.open-meteo.com/v1/forecast" +
       `?latitude=${LAT}&longitude=${LON}` +
@@ -126,24 +127,22 @@ module.exports = async (req, res) => {
 
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Open-Meteo error: ${response.status} ${response.statusText}`);
+      console.error("Open-Meteo HTTP error:", response.status, response.statusText);
+      throw new Error("Open-Meteo error");
     }
 
     const meteo = await response.json();
-    const daily = meteo.daily;
-    const hourly = meteo.hourly;
-    const currentWeather = meteo.current_weather;
-
-    if (!daily || !hourly || !currentWeather) {
+    if (!meteo.daily || !meteo.hourly || !meteo.current_weather) {
       throw new Error("Respuesta incompleta de Open-Meteo");
     }
+
+    const daily = meteo.daily;
+    const hourly = meteo.hourly;
 
     // ---- LOCALIZAR HOY EN daily.time ----
     const todayLocalStr = getTodayLocalISO();
     let idxToday = daily.time.findIndex((t) => t === todayLocalStr);
-    if (idxToday === -1) {
-      idxToday = 0;
-    }
+    if (idxToday === -1) idxToday = 0;
 
     // ---- PRONÓSTICO: desde HOY los próximos 7 días ----
     const startIndex = idxToday;
@@ -201,36 +200,38 @@ module.exports = async (req, res) => {
       };
     });
 
-    // ---- RESÚMENES ----
+    // ---- LLUVIA DE HOY (Open-Meteo) ----
     const todayRainMm =
       daily.precipitation_sum &&
       typeof daily.precipitation_sum[idxToday] === "number"
         ? daily.precipitation_sum[idxToday]
         : 0;
 
-    // La Nueva + Meteobahia en paralelo
-const [laNuevaData, meteobahiaLluv] = await Promise.all([
-  fetchLaNuevaPrecip(),
-  fetchMeteobahiaLluv(),
-]);
+    // ---- La Nueva + Meteobahia EN PARALELO ----
+    const [laNuevaData, meteobahiaLluv] = await Promise.all([
+      fetchLaNuevaPrecip(),
+      fetchMeteobahiaLluv(),
+    ]);
 
-// Log para ver en los logs de Vercel qué viene
-console.log("meteobahiaLluv:", meteobahiaLluv);
+    console.log("meteobahiaLluv:", meteobahiaLluv);
 
-// Elegimos fuente y valor
-const todaySource = meteobahiaLluv != null ? "meteobahia" : "open-meteo";
-const todayValue = meteobahiaLluv != null ? meteobahiaLluv : todayRainMm;
-const todayLabel = `${todayValue.toFixed(1)} mm`;
+    const todaySource = meteobahiaLluv != null ? "meteobahia" : "open-meteo";
+    const todayValue = meteobahiaLluv != null ? meteobahiaLluv : todayRainMm;
+    const todayLabel = `${todayValue.toFixed(1)} mm`;
 
-res.json({
-  forecast,
-  precipRecords,
-  summaries: {
-    today: todayLabel,
-    todaySource,                                  // <--- NUEVO
-    month: `${laNuevaData.monthly_mm} mm`,
-    historicalNov: `${laNuevaData.historical_nov} mm`,
-    yearly: `${laNuevaData.yearly_mm} mm`,
-  },
-});
-
+    res.status(200).json({
+      forecast,
+      precipRecords,
+      summaries: {
+        today: todayLabel,                          // lo que ve tu tarjeta
+        todaySource,                                // "meteobahia" o "open-meteo"
+        month: `${laNuevaData.monthly_mm} mm`,
+        historicalNov: `${laNuevaData.historical_nov} mm`,
+        yearly: `${laNuevaData.yearly_mm} mm`,
+      },
+    });
+  } catch (err) {
+    console.error("API Error:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+};
