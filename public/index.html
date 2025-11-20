@@ -43,17 +43,15 @@
     .hero-wrapper {
       margin-bottom: 1.5rem;
     }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.9rem;
-    }
-    @media (min-width: 768px) {
-      .hero-grid {
-        grid-template-columns: 3fr 2fr;
-        align-items: stretch;
-      }
-    }
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr; /* aprox 60% / 40% */
+  gap: 0.9rem;
+  align-items: stretch;
+}
+
+/* Eliminá por completo el @media anterior */
+
 
     .today-card {
       background: #1b1b1b;
@@ -299,7 +297,6 @@
 
   <div class="header-mobile">
     <h1>Clima Bahía Blanca</h1>
-    <p class="header-subtitle">Bahía Blanca · datos actualizados en vivo</p>
   </div>
 
   <!-- CLIMA ACTUAL + PRÓXIMOS DÍAS -->
@@ -559,3 +556,4 @@
 </script>
 </body>
 </html>
+
