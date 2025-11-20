@@ -356,7 +356,7 @@
     if (!radarImg) return;
 
     try {
-      const res = await fetch('/api/radar.js');
+     const res = await fetch('/api/radar');
       if (!res.ok) throw new Error('API radar error');
       const data = await res.json();
       radarImg.src = data.latestUrl + `?t=${Date.now()}`;
@@ -383,4 +383,5 @@
 </script>
 </body>
 </html>
+
 
