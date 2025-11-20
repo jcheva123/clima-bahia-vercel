@@ -37,8 +37,7 @@ function getTodayLocalISO() {
   return `${obj.year}-${obj.month}-${obj.day}`;
 }
 
-// Intenta leer los datos de precipitaciones desde La Nueva.
-// Si falla, devuelve valores de respaldo.
+// Lee precipitaciones mensuales/anuales desde La Nueva (con fallback)
 async function fetchLaNuevaPrecip() {
   const fallback = {
     monthly_mm: 21.5,
@@ -60,21 +59,58 @@ async function fetchLaNuevaPrecip() {
 
     const parseNum = (str) => {
       if (!str) return null;
-      // quita separador de miles ".", cambia coma por punto
       const cleaned = str.replace(/\./g, "").replace(",", ".");
       const n = parseFloat(cleaned);
       return isNaN(n) ? null : n;
     };
 
-    const monthly_mm    = parseNum(monthMatch && monthMatch[1]) ?? fallback.monthly_mm;
-    const historical_nov = parseNum(histMatch && histMatch[1]) ?? fallback.historical_nov;
-    const yearly_mm     = parseNum(yearMatch && yearMatch[1]) ?? fallback.yearly_mm;
+    const monthly_mm     = parseNum(monthMatch && monthMatch[1]) ?? fallback.monthly_mm;
+    const historical_nov = parseNum(histMatch && histMatch[1])  ?? fallback.historical_nov;
+    const yearly_mm      = parseNum(yearMatch && yearMatch[1])  ?? fallback.yearly_mm;
 
     return { monthly_mm, historical_nov, yearly_mm };
   } catch (err) {
     console.error("Error leyendo La Nueva:", err);
     return fallback;
   }
+}
+
+// Lee el último "Lluv:3.7 mm" de los posts de @meteobahia en X
+async function fetchMeteobahiaLluv() {
+  const urls = [
+    "https://x.com/meteobahia",
+    "https://mobile.twitter.com/meteobahia",
+  ];
+
+  const regex = /Lluv:\s*([\d.,]+)\s*mm/i;
+
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; ClimaBahiaBot/1.0; +https://clima-bahia-vercel.vercel.app)",
+        },
+      });
+      if (!res.ok) {
+        console.error("Meteobahia HTTP error:", url, res.status, res.statusText);
+        continue;
+      }
+      const html = await res.text();
+      const match = regex.exec(html);
+      if (match && match[1]) {
+        const num = parseFloat(match[1].replace(",", "."));
+        if (!isNaN(num)) {
+          return num; // mm desde el último post que menciona Lluv:
+        }
+      }
+    } catch (err) {
+      console.error("Error leyendo Meteobahia:", url, err);
+    }
+  }
+
+  // Si no encontramos nada, devolvemos null
+  return null;
 }
 
 module.exports = async (req, res) => {
@@ -171,16 +207,23 @@ module.exports = async (req, res) => {
       typeof daily.precipitation_sum[idxToday] === "number"
         ? daily.precipitation_sum[idxToday]
         : 0;
-    const todayLabel = `${todayRainMm.toFixed(1)} mm`;
 
-    const laNuevaData = await fetchLaNuevaPrecip();
+    // La Nueva + Meteobahia en paralelo
+    const [laNuevaData, meteobahiaLluv] = await Promise.all([
+      fetchLaNuevaPrecip(),
+      fetchMeteobahiaLluv(),
+    ]);
+
+    // Si Meteobahia devolvió algo, usamos eso; si no, usamos Open-Meteo
+    const todayValue = meteobahiaLluv != null ? meteobahiaLluv : todayRainMm;
+    const todayLabel = `${todayValue.toFixed(1)} mm`;
 
     res.json({
       forecast,
       precipRecords,
       summaries: {
-        today: todayLabel,
-        month: `${laNuevaData.monthly_mm} mm`,
+        today: todayLabel,                              // "Último registro (día)" → Lluv de Meteobahia si existe
+        month: `${laNuevaData.monthly_mm} mm`,          // Mes (La Nueva)
         historicalNov: `${laNuevaData.historical_nov} mm`,
         yearly: `${laNuevaData.yearly_mm} mm`,
       },
