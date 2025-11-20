@@ -2,7 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/*.js",
+      "src": "api/data.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/radar.js",
       "use": "@vercel/node"
     },
     {
