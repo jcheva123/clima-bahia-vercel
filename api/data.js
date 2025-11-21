@@ -95,7 +95,7 @@ async function fetchMeteobahiaLluv() {
     const userId = userData.data.id;
 
     // Obtener últimos 5 tweets
-    const tweetsRes = await fetch(`https://api.twitter.com/2/users/${userId}/tweets?max_results=5&tweet.fields=text`, {
+const tweetsRes = await fetch(`https://api.twitter.com/2/users/${userId}/tweets?max_results=10&exclude=replies&tweet.fields=text`, {
       headers: {
         'Authorization': `Bearer ${bearer}`
       }
@@ -247,3 +247,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
