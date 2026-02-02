@@ -1,12 +1,15 @@
 {
-  "timestamp": "2025-11-11T15:49:00.000Z",
-  "forecast": [ /* ... */ ],
-  "precipRecords": [ /* ... */ ],
-  "summaries": {
-    "today": "13.8 mm",
-    "month": "21.8 mm",
-    "historicalNov": "57.2 mm",
-    "yearly": "986.1 mm"
+  "current": {
+    "temp": 24,
+    "icon": "⛅",
+    "text": "Parcialmente nublado"
   },
-  "monthlyRain": [ /* ... */ ]
+  "forecast": [],
+  "precipRecords": [],
+  "summaries": {
+    "today": "—",
+    "month": "—",
+    "historicalNov": "—",
+    "yearly": "—"
+  }
 }
