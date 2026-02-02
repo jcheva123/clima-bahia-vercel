@@ -86,10 +86,29 @@ async function fetchLaNuevaPrecip() {
     const histMatch = html.match(/Media hist[óo]rica\s*([\d.,]+)\s*mm/i);
     const yearMatch = html.match(/En el a[ñn]o\s*([\d.,]+)\s*mm/i);
 
+    // La Nueva puede publicar con punto decimal (66.2) o con formato ES (1.234,5).
+    // No podemos borrar puntos indiscriminadamente.
     const parseNum = (str) => {
       if (!str) return null;
-      const cleaned = str.replace(/\./g, "").replace(",", ".");
-      const n = parseFloat(cleaned);
+      let s = String(str).trim();
+      // mantener solo dígitos, coma, punto y signo
+      s = s.replace(/[^0-9,.-]/g, "");
+      const hasComma = s.includes(",");
+      const hasDot = s.includes(".");
+
+      if (hasComma && hasDot) {
+        // caso típico ES: 1.234,5
+        s = s.replace(/\./g, "").replace(",", ".");
+      } else if (hasComma && !hasDot) {
+        // decimal con coma: 66,2
+        s = s.replace(",", ".");
+      } else if (hasDot && !hasComma) {
+        // si parece separador de miles (1.234) y no decimal
+        const m = s.match(/^(-?\d{1,3})\.(\d{3})$/);
+        if (m) s = `${m[1]}${m[2]}`;
+      }
+
+      const n = parseFloat(s);
       return Number.isFinite(n) ? n : null;
     };
 
