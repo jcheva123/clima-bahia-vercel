@@ -13,10 +13,11 @@ const BCP_STATIONS = [
     id: 29,
     short: "Centro",
     label: "Estación 29 - Bahía Blanca - Centro (B. Bca.)",
-    link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=29",
+    // Nota: el parámetro Estacion=104 es el ID interno del sitio para "Centro"
+    link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=104",
     urls: [
-      "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=29",
-      "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=29",
+      "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=104",
+      "https://info.bcp.org.ar/Estaciones/Mapa_NvoBCP.asp?Estacion=104",
     ],
   },
   {
@@ -26,7 +27,7 @@ const BCP_STATIONS = [
     link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1",
     urls: [
       "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1",
-      "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=1",
+      "https://info.bcp.org.ar/Estaciones/Mapa_NvoBCP.asp?Estacion=1",
     ],
   },
   {
@@ -36,7 +37,7 @@ const BCP_STATIONS = [
     link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3",
     urls: [
       "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3",
-      "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=3",
+      "https://info.bcp.org.ar/Estaciones/Mapa_NvoBCP.asp?Estacion=3",
     ],
   },
 ];
@@ -87,7 +88,7 @@ function parseMaybeNumber(v) {
 }
 
 // Descarga HTML en bytes y decodifica con latin1 (BCP suele venir en ISO-8859-1)
-async function fetchHtmlLatin1(url, timeoutMs = 6500) {
+async function fetchHtmlLatin1(url, timeoutMs = 8500) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
 
@@ -96,15 +97,14 @@ async function fetchHtmlLatin1(url, timeoutMs = 6500) {
       redirect: "follow",
       signal: ctrl.signal,
       headers: {
-        // algunos sitios responden mejor con UA explícito
         "User-Agent": "Mozilla/5.0 (compatible; ClimaBahia/1.0; +https://vercel.com)",
         "Accept": "text/html,application/xhtml+xml",
       },
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
     const ab = await r.arrayBuffer();
-    const decoder = new TextDecoder("latin1");
-    return decoder.decode(ab);
+    // Node: Buffer soporta latin1 (ISO-8859-1) de forma nativa
+    return Buffer.from(ab).toString("latin1");
   } finally {
     clearTimeout(t);
   }
@@ -237,17 +237,42 @@ async function getLast7DaysPrecipFromMeteostat(stationId) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// BCP Estación 29 (fallback) – "Precipitaciones del día"
+// BCP – helpers de parsing (HTML -> texto)
+// ─────────────────────────────────────────────────────────────
+function normalizeBcpText(html) {
+  let s = String(html || "");
+  // quitar scripts/estilos/comentarios
+  s = s.replace(/<script\b[\s\S]*?<\/script>/gi, " ");
+  s = s.replace(/<style\b[\s\S]*?<\/style>/gi, " ");
+  s = s.replace(/<!--[\s\S]*?-->/g, " ");
+  // quitar tags
+  s = s.replace(/<[^>]+>/g, " ");
+  // entidades comunes
+  s = s.replace(/&nbsp;|&#160;/gi, " ");
+  s = s
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, "\"")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+  // entidades numéricas
+  s = s.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  s = s.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+  // normalizar espacios
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
+}
+
+// ─────────────────────────────────────────────────────────────
+// BCP Estaciones – "Precipitaciones del día" y acumulado mensual
 // ─────────────────────────────────────────────────────────────
 function parseBcpPrecipTodayMm(html) {
-  // Ejemplos vistos en snippets:
-  // "Precipitaciones del día, 0 mm"
-  // "Precipitaciones del día</td><td>0 mm"
-  const rx = /Precipitaciones\s+del\s+d[ií]a[^0-9]*([\d.,]+)\s*mm/i;
-  const m = html.match(rx);
+  const txt = normalizeBcpText(html);
+  const rx = /Precipitaciones\s+del\s+d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*mm/i;
+  const m = txt.match(rx);
   if (!m) return null;
-  const n = parseFloat(m[1].replace(",", "."));
-  return Number.isFinite(n) ? n : null;
+  if (/N\/D/i.test(m[1])) return null;
+  const n = parseMaybeNumber(m[1]);
+  return n != null ? n : null;
 }
 
 function getLocalMonth2Digits() {
@@ -256,14 +281,14 @@ function getLocalMonth2Digits() {
 }
 
 function parseBcpMonthAccum(html, currentMonth2) {
-  // Filas típicas:
-  // "Precip. 01/02 al 11/02" 19.3 mm
-  const rx = /Precip\.?\s*(\d{2}\/\d{2})\s*al\s*(\d{2}\/\d{2})[^0-9N]*([\d.,]+)\s*mm/gi;
+  const txt = normalizeBcpText(html);
+  const rx = /Precip\.?\s*(\d{2}\/\d{2})\s*al\s*(\d{2}\/\d{2})\s*(N\/D|[\d.,]+)\s*mm/gi;
   const matches = [];
   let m;
-  while ((m = rx.exec(html)) !== null) {
+  while ((m = rx.exec(txt)) !== null) {
     const start = m[1];
     const end = m[2];
+    if (/N\/D/i.test(m[3])) continue;
     const mm = parseMaybeNumber(m[3]);
     if (mm == null) continue;
     matches.push({
@@ -276,7 +301,6 @@ function parseBcpMonthAccum(html, currentMonth2) {
 
   if (matches.length === 0) return { label: null, mm: null };
 
-  // Preferimos el acumulado del mes actual: empieza en 01/MM
   const targetStart = `01/${currentMonth2}`;
   const monthMatches = matches.filter((x) => x.start === targetStart);
   const pick = (monthMatches.length ? monthMatches : matches).at(-1);
