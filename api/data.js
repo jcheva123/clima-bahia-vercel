@@ -7,10 +7,38 @@ const TIMEZONE = "America/Argentina/Buenos_Aires";
 // Meteostat: estación (según meteostat.net/es/station/87750)
 const METEOSTAT_STATION_ID = "87750";
 
-// BCP (Bolsa de Cereales Bahía Blanca) – Estación 29 Centro
-const BCP_STATION_29_URLS = [
-  "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=29",
-  "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=29",
+// BCP (Bolsa de Cereales Bahía Blanca) – Estaciones
+const BCP_STATIONS = [
+  {
+    id: 29,
+    short: "Centro",
+    label: "Estación 29 - Bahía Blanca - Centro (B. Bca.)",
+    link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=29",
+    urls: [
+      "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=29",
+      "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=29",
+    ],
+  },
+  {
+    id: 1,
+    short: "Grünbein",
+    label: "Estación 1 - Grünbein (B. Bca.)",
+    link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1",
+    urls: [
+      "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1",
+      "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=1",
+    ],
+  },
+  {
+    id: 3,
+    short: "La Vitícola",
+    label: "Estación 3 - La Vitícola (B. Bca.)",
+    link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3",
+    urls: [
+      "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3",
+      "https://info.bcp.org.ar/Estaciones/MapaG.asp?Estacion=3",
+    ],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -59,12 +87,27 @@ function parseMaybeNumber(v) {
 }
 
 // Descarga HTML en bytes y decodifica con latin1 (BCP suele venir en ISO-8859-1)
-async function fetchHtmlLatin1(url) {
-  const r = await fetch(url, { redirect: "follow" });
-  if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
-  const ab = await r.arrayBuffer();
-  const decoder = new TextDecoder("latin1");
-  return decoder.decode(ab);
+async function fetchHtmlLatin1(url, timeoutMs = 6500) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+  try {
+    const r = await fetch(url, {
+      redirect: "follow",
+      signal: ctrl.signal,
+      headers: {
+        // algunos sitios responden mejor con UA explícito
+        "User-Agent": "Mozilla/5.0 (compatible; ClimaBahia/1.0; +https://vercel.com)",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+    const ab = await r.arrayBuffer();
+    const decoder = new TextDecoder("latin1");
+    return decoder.decode(ab);
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -207,18 +250,81 @@ function parseBcpPrecipTodayMm(html) {
   return Number.isFinite(n) ? n : null;
 }
 
-async function fetchBcpStation29PrecipToday() {
-  for (const url of BCP_STATION_29_URLS) {
+function getLocalMonth2Digits() {
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE, month: "2-digit" });
+  return fmt.format(new Date());
+}
+
+function parseBcpMonthAccum(html, currentMonth2) {
+  // Filas típicas:
+  // "Precip. 01/02 al 11/02" 19.3 mm
+  const rx = /Precip\.?\s*(\d{2}\/\d{2})\s*al\s*(\d{2}\/\d{2})[^0-9N]*([\d.,]+)\s*mm/gi;
+  const matches = [];
+  let m;
+  while ((m = rx.exec(html)) !== null) {
+    const start = m[1];
+    const end = m[2];
+    const mm = parseMaybeNumber(m[3]);
+    if (mm == null) continue;
+    matches.push({
+      start,
+      end,
+      mm,
+      label: `Precip. ${start} al ${end}`,
+    });
+  }
+
+  if (matches.length === 0) return { label: null, mm: null };
+
+  // Preferimos el acumulado del mes actual: empieza en 01/MM
+  const targetStart = `01/${currentMonth2}`;
+  const monthMatches = matches.filter((x) => x.start === targetStart);
+  const pick = (monthMatches.length ? monthMatches : matches).at(-1);
+  return { label: pick.label, mm: pick.mm };
+}
+
+async function fetchBcpStationSnapshot(station, currentMonth2) {
+  let lastErr = null;
+
+  for (const url of station.urls) {
     try {
       const html = await fetchHtmlLatin1(url);
-      const mm = parseBcpPrecipTodayMm(html);
-      if (mm != null) return mm;
+      const today_mm = parseBcpPrecipTodayMm(html);
+      const month = parseBcpMonthAccum(html, currentMonth2);
+
+      // Si al menos algo aparece, devolvemos
+      if (today_mm != null || month.mm != null) {
+        return {
+          id: station.id,
+          short: station.short,
+          label: station.label,
+          link: station.link,
+          today_mm: today_mm != null ? Number(today_mm) : null,
+          month_mm: month.mm != null ? Number(month.mm) : null,
+          month_label: month.label,
+        };
+      }
     } catch (e) {
-      // seguir con el próximo
+      lastErr = e;
       console.warn("BCP fetch/parse error:", url, e?.message || e);
     }
   }
-  return null;
+
+  return {
+    id: station.id,
+    short: station.short,
+    label: station.label,
+    link: station.link,
+    today_mm: null,
+    month_mm: null,
+    month_label: null,
+    error: lastErr ? (lastErr.message || String(lastErr)) : undefined,
+  };
+}
+
+async function fetchBcpStations() {
+  const currentMonth2 = getLocalMonth2Digits();
+  return Promise.all(BCP_STATIONS.map((s) => fetchBcpStationSnapshot(s, currentMonth2)));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -303,7 +409,9 @@ module.exports = async (req, res) => {
     }
 
     // fallback BCP para HOY si no hay Meteostat (o viene null)
-    const bcpTodayMm = await fetchBcpStation29PrecipToday();
+    const bcpStations = await fetchBcpStations();
+
+    const bcpTodayMm = bcpStations.find((s) => s.id === 29)?.today_mm ?? null;
 
     const precipRecords = [];
     for (let i = 0; i < 7; i++) {
@@ -358,6 +466,7 @@ module.exports = async (req, res) => {
       current,
       forecast,
       precipRecords, // 7 días: hoy -> atrás
+      bcpStations, // Otros registros (BCP)
       summaries: {
         today: lastValue != null ? `${lastValue.toFixed(1)} mm` : "—",
         month: `${Number(laNuevaData.monthly_mm).toFixed(1)} mm`,
