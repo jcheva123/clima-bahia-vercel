@@ -596,7 +596,7 @@
       { day: "Martes", date: "26/01", rain: 0.0, source: "Meteostat" }
     ],
     bcpStations: [
-      { id: 29, short: "Centro", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=29", today_mm: 0.0, month_mm: 19.3, month_label: "Precip. 01/02 al 11/02" },
+      { id: 29, short: "Centro", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=104", today_mm: 0.0, month_mm: 19.3, month_label: "Precip. 01/02 al 11/02" },
       { id: 1, short: "Grünbein", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1", today_mm: 0.0, month_mm: 12.1, month_label: "Precip. 01/02 al 11/02" },
       { id: 3, short: "La Vitícola", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3", today_mm: 0.0, month_mm: 17.8, month_label: "Precip. 01/02 al 11/02" }
     ]
@@ -684,7 +684,7 @@
           stations.forEach(s => {
             const day = (typeof s.today_mm === 'number') ? `${s.today_mm.toFixed(1)} mm` : '—';
             const month = (typeof s.month_mm === 'number') ? `${s.month_mm.toFixed(1)} mm` : '—';
-            const sub = (s.month_label || 'Acumulado del mes');
+            const sub = (s.month_label || '');
             const name = (s.short || s.label || 'Estación').toString();
             const link = (s.link || '#');
 
