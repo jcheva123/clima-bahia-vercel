@@ -87,6 +87,12 @@ function parseMaybeNumber(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+function stripAccents(s) {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // saca tildes
+}
+
 // Descarga HTML en bytes y decodifica con latin1 (BCP suele venir en ISO-8859-1)
 async function fetchHtmlLatin1(url, timeoutMs = 8500) {
   const ctrl = new AbortController();
@@ -98,7 +104,7 @@ async function fetchHtmlLatin1(url, timeoutMs = 8500) {
       signal: ctrl.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; ClimaBahia/1.0; +https://vercel.com)",
-        "Accept": "text/html,application/xhtml+xml",
+        Accept: "text/html,application/xhtml+xml",
       },
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
@@ -172,7 +178,8 @@ async function fetchLaNuevaPrecip() {
 // ─────────────────────────────────────────────────────────────
 
 // cache en memoria (vive mientras el lambda quede caliente)
-const meteostatCache = globalThis.__METEOSTAT_CACHE__ || (globalThis.__METEOSTAT_CACHE__ = new Map());
+const meteostatCache =
+  globalThis.__METEOSTAT_CACHE__ || (globalThis.__METEOSTAT_CACHE__ = new Map());
 const METEOSTAT_TTL_MS = 6 * 60 * 60 * 1000; // 6h
 
 async function loadMeteostatDailyYear(stationId, year) {
@@ -197,7 +204,9 @@ async function loadMeteostatDailyYear(stationId, year) {
   const idxPrcpSource = header.indexOf("prcp_source");
 
   if (idxDate === -1 || idxPrcp === -1) {
-    throw new Error(`Meteostat CSV sin columnas esperadas (date/prcp). Header: ${header.join(",")}`);
+    throw new Error(
+      `Meteostat CSV sin columnas esperadas (date/prcp). Header: ${header.join(",")}`
+    );
   }
 
   const map = new Map(); // date -> { prcp, sourceIds? }
@@ -251,11 +260,13 @@ function normalizeBcpText(html) {
   s = s.replace(/&nbsp;|&#160;/gi, " ");
   s = s
     .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, "\"")
+    .replace(/&quot;/gi, '"')
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
   // entidades numéricas
-  s = s.replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  s = s.replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
   s = s.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
   // normalizar espacios
   s = s.replace(/\s+/g, " ").trim();
@@ -267,12 +278,62 @@ function normalizeBcpText(html) {
 // ─────────────────────────────────────────────────────────────
 function parseBcpPrecipTodayMm(html) {
   const txt = normalizeBcpText(html);
-  const rx = /Precipitaciones\s+del\s+d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*mm/i;
-  const m = txt.match(rx);
-  if (!m) return null;
-  if (/N\/D/i.test(m[1])) return null;
-  const n = parseMaybeNumber(m[1]);
-  return n != null ? n : null;
+
+  // 1) Intentos “directos” (varias formas comunes)
+  const directPatterns = [
+    // "Precipitaciones del día 0 mm" / "Precipitaciones del dia: 0"
+    /Precipitaciones\s+del\s+d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+
+    // Abreviado: "Precip. del día 0 mm"
+    /Precip\.?\s*(?:del)?\s*d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+
+    // Variante singular: "Precipitación del día 0 mm"
+    /Precipitaci[oó]n(?:es)?\s+del\s+d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+
+    // "Hoy 0 mm"
+    /(?:Precipitaci[oó]n(?:es)?\s+hoy|Lluvia\s+hoy)\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+  ];
+
+  for (const rx of directPatterns) {
+    const m = txt.match(rx);
+    if (m && m[1]) {
+      if (/N\/D/i.test(m[1])) return null;
+      const n = parseMaybeNumber(m[1]);
+      if (n != null) return n;
+    }
+  }
+
+  // 2) Fallback robusto: encontrar el título y leer “un poco después”
+  //    (cubre el caso donde el número queda separado del "mm" o del texto)
+  const low = stripAccents(txt).toLowerCase();
+
+  const keys = [
+    "precipitaciones del dia",
+    "precipitacion del dia",
+    "precip del dia",
+    "precip. del dia",
+    "lluvia del dia",
+    "lluvia hoy",
+    "precipitaciones hoy",
+  ];
+
+  for (const key of keys) {
+    const idx = low.indexOf(key);
+    if (idx !== -1) {
+      const windowTxt = txt.slice(idx, idx + 180);
+
+      if (/N\/D/i.test(windowTxt)) return null;
+
+      // primer número “razonable” después del label
+      const nm = windowTxt.match(/([\d]+(?:[.,]\d+)?)/);
+      if (nm && nm[1]) {
+        const n = parseMaybeNumber(nm[1]);
+        if (n != null) return n;
+      }
+    }
+  }
+
+  return null;
 }
 
 function getLocalMonth2Digits() {
@@ -342,7 +403,7 @@ async function fetchBcpStationSnapshot(station, currentMonth2) {
     today_mm: null,
     month_mm: null,
     month_label: null,
-    error: lastErr ? (lastErr.message || String(lastErr)) : undefined,
+    error: lastErr ? lastErr.message || String(lastErr) : undefined,
   };
 }
 
@@ -432,9 +493,8 @@ module.exports = async (req, res) => {
       openMeteoDailyByISO.set(daily.time[i], parseMaybeNumber(daily.precipitation_sum[i]));
     }
 
-    // fallback BCP para HOY si no hay Meteostat (o viene null)
+    // BCP stations (para "Otros registros" y también fallback de HOY)
     const bcpStations = await fetchBcpStations();
-
     const bcpTodayMm = bcpStations.find((s) => s.id === 29)?.today_mm ?? null;
 
     const precipRecords = [];
@@ -449,7 +509,7 @@ module.exports = async (req, res) => {
       let mm = m?.prcp ?? null;
       let source = m?.source ?? "Meteostat";
 
-      // Si Meteostat no trajo dato: intentar Open-Meteo (model / reanalysis)
+      // Si Meteostat no trajo dato: intentar Open-Meteo
       if (mm == null) {
         const om = openMeteoDailyByISO.get(dateISO);
         if (om != null) {
@@ -473,9 +533,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Orden: hoy primero (ya lo es)
     // 5) Tarjetas resumen
-    // "Último registro (día)" → el primer valor disponible desde HOY hacia atrás
     let lastValue = null;
     for (const r of precipRecords) {
       if (typeof r.rain === "number") {
