@@ -94,7 +94,7 @@ function stripAccents(s) {
 }
 
 // Descarga HTML en bytes y decodifica con latin1 (BCP suele venir en ISO-8859-1)
-async function fetchHtmlLatin1(url, timeoutMs = 8500) {
+async function fetchHtmlSmart(url, timeoutMs = 8500) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
 
@@ -108,9 +108,26 @@ async function fetchHtmlLatin1(url, timeoutMs = 8500) {
       },
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} ${r.statusText}`);
+
     const ab = await r.arrayBuffer();
-    // Node: Buffer soporta latin1 (ISO-8859-1) de forma nativa
-    return Buffer.from(ab).toString("latin1");
+    const buf = Buffer.from(ab);
+
+    // probamos UTF-8 y latin1 y elegimos el que “parece” correcto
+    const asUtf8 = buf.toString("utf8");
+    const asLatin1 = buf.toString("latin1");
+
+    const score = (s) => {
+      const t = String(s || "");
+      // señales fuertes de que el decode es correcto
+      let sc = 0;
+      if (/Precipitaciones/i.test(t)) sc += 5;
+      if (/Precip\./i.test(t)) sc += 3;
+      if (/d[ií]a/i.test(t)) sc += 2; // día/dia bien formado
+      if (/dÃ­a|d�a/i.test(t)) sc -= 10; // típico de decode incorrecto
+      return sc;
+    };
+
+    return score(asUtf8) >= score(asLatin1) ? asUtf8 : asLatin1;
   } finally {
     clearTimeout(t);
   }
@@ -373,7 +390,7 @@ async function fetchBcpStationSnapshot(station, currentMonth2) {
 
   for (const url of station.urls) {
     try {
-      const html = await fetchHtmlLatin1(url);
+      const html = await fetchHtmlSmart(url);
       const today_mm = parseBcpPrecipTodayMm(html);
       const month = parseBcpMonthAccum(html, currentMonth2);
 
@@ -564,3 +581,4 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
