@@ -294,55 +294,65 @@ function normalizeBcpText(html) {
 // BCP Estaciones – "Precipitaciones del día" y acumulado mensual
 // ─────────────────────────────────────────────────────────────
 function parseBcpPrecipTodayMm(html) {
-  const txt = normalizeBcpText(html);
+  const raw = String(html || "");
 
-  // 1) Intentos “directos” (varias formas comunes)
+  // 1) Intento sobre HTML CRUDO (atraviesa tags y conserva atributos)
+  // Acepta: día / dia / d&iacute;a / &#237; / mojibake dÃ­a / d�a
+  // Acepta separadores : ; , o nada
+  const rawRx = /Precipitaciones\s+del\s+d(?:i|&iacute;|&#237;|Ã­|�)?a[\s\S]{0,220}?(N\/D|[\d]+(?:[.,]\d+)?)\s*mm/i;
+  const mRaw = raw.match(rawRx);
+  if (mRaw && mRaw[1]) {
+    if (/N\/D/i.test(mRaw[1])) return null;
+    const n = parseMaybeNumber(mRaw[1]);
+    if (n != null) return n;
+  }
+
+  // 2) Intento sobre texto normalizado (como antes)
+  const txt = normalizeBcpText(raw);
+
+  // Canon: sin acentos + arreglos de mojibake
+  let canon = stripAccents(txt).toLowerCase();
+  canon = canon
+    .replace(/dÃ­a/g, "dia")
+    .replace(/d�a/g, "dia")
+    .replace(/precipitaciÃ³n/g, "precipitacion")
+    .replace(/precipitaci�n/g, "precipitacion")
+    .replace(/\s+/g, " ")
+    .trim();
+
   const directPatterns = [
-    // "Precipitaciones del día, 0 mm" / "Precipitaciones del dia: 0" / "Precipitaciones del día 0"
-    /Precipitaciones\s+del\s+d[ií]a\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
-
-    // Abreviado: "Precip. del día, 0 mm"
-    /Precip\.?\s*(?:del)?\s*d[ií]a\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
-
-    // Variante singular: "Precipitación del día, 0 mm"
-    /Precipitaci[oó]n(?:es)?\s+del\s+d[ií]a\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
-
-    // "Hoy, 0 mm"
-    /(?:Precipitaci[oó]n(?:es)?\s+hoy|Lluvia\s+hoy)\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+    /precipitaciones\s+del\s+dia\s*[:;,]?\s*(n\/d|[\d.,]+)\s*(?:mm|milimetros)?/i,
+    /precip\.?\s*(?:del)?\s*dia\s*[:;,]?\s*(n\/d|[\d.,]+)\s*(?:mm|milimetros)?/i,
+    /precipitacion(?:es)?\s+del\s+dia\s*[:;,]?\s*(n\/d|[\d.,]+)\s*(?:mm|milimetros)?/i,
   ];
 
   for (const rx of directPatterns) {
-    const m = txt.match(rx);
+    const m = canon.match(rx);
     if (m && m[1]) {
-      if (/N\/D/i.test(m[1])) return null;
+      if (/n\/d/i.test(m[1])) return null;
       const n = parseMaybeNumber(m[1]);
       if (n != null) return n;
     }
   }
 
-  // 2) Fallback robusto: encontrar el título y leer “un poco después”
-  //    (cubre el caso donde el número queda separado del "mm" o del texto)
-  const low = stripAccents(txt).toLowerCase();
-
-  const keys = [
-    "precipitaciones del dia",
-    "precipitacion del dia",
-    "precip del dia",
-    "precip. del dia",
-    "lluvia del dia",
-    "lluvia hoy",
-    "precipitaciones hoy",
-  ];
+  // 3) Fallback por ventana (prioriza "xx mm" para no agarrar fechas)
+  const keys = ["precipitaciones del dia", "precipitacion del dia", "precip del dia", "precip. del dia"];
 
   for (const key of keys) {
-    const idx = low.indexOf(key);
+    const idx = canon.indexOf(key);
     if (idx !== -1) {
-      const windowTxt = txt.slice(idx, idx + 180);
+      const windowCanon = canon.slice(idx, idx + 260);
 
-      if (/N\/D/i.test(windowTxt)) return null;
+      if (/n\/d/i.test(windowCanon)) return null;
 
-      // primer número “razonable” después del label
-      const nm = windowTxt.match(/([\d]+(?:[.,]\d+)?)/);
+      const withMm = windowCanon.match(/[:;,]?\s*(n\/d|[\d]+(?:[.,]\d+)?)\s*mm/i);
+      if (withMm && withMm[1]) {
+        if (/n\/d/i.test(withMm[1])) return null;
+        const n = parseMaybeNumber(withMm[1]);
+        if (n != null) return n;
+      }
+
+      const nm = windowCanon.match(/([\d]+(?:[.,]\d+)?)/);
       if (nm && nm[1]) {
         const n = parseMaybeNumber(nm[1]);
         if (n != null) return n;
@@ -352,6 +362,7 @@ function parseBcpPrecipTodayMm(html) {
 
   return null;
 }
+
 
 function getLocalMonth2Digits() {
   const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE, month: "2-digit" });
@@ -581,6 +592,7 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
 
 
 
