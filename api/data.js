@@ -298,17 +298,17 @@ function parseBcpPrecipTodayMm(html) {
 
   // 1) Intentos “directos” (varias formas comunes)
   const directPatterns = [
-    // "Precipitaciones del día 0 mm" / "Precipitaciones del dia: 0"
-    /Precipitaciones\s+del\s+d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+    // "Precipitaciones del día, 0 mm" / "Precipitaciones del dia: 0" / "Precipitaciones del día 0"
+    /Precipitaciones\s+del\s+d[ií]a\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
 
-    // Abreviado: "Precip. del día 0 mm"
-    /Precip\.?\s*(?:del)?\s*d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+    // Abreviado: "Precip. del día, 0 mm"
+    /Precip\.?\s*(?:del)?\s*d[ií]a\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
 
-    // Variante singular: "Precipitación del día 0 mm"
-    /Precipitaci[oó]n(?:es)?\s+del\s+d[ií]a\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+    // Variante singular: "Precipitación del día, 0 mm"
+    /Precipitaci[oó]n(?:es)?\s+del\s+d[ií]a\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
 
-    // "Hoy 0 mm"
-    /(?:Precipitaci[oó]n(?:es)?\s+hoy|Lluvia\s+hoy)\s*:?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
+    // "Hoy, 0 mm"
+    /(?:Precipitaci[oó]n(?:es)?\s+hoy|Lluvia\s+hoy)\s*[:;,]?\s*(N\/D|[\d.,]+)\s*(?:mm|mil[ií]metros)?\.?/i,
   ];
 
   for (const rx of directPatterns) {
@@ -581,4 +581,5 @@ module.exports = async (req, res) => {
     res.status(500).json({ error: "Error interno" });
   }
 };
+
 
