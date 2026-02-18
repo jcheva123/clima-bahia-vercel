@@ -367,7 +367,13 @@
 
   <!-- RADAR -->
   <div class="sat-section">
-    <div class="sat-title">Radar Bahía Blanca (🚀)</div>
+<div class="sat-title">
+  Radar Bahía Blanca (🚀)
+  <div id="radar-time" style="font-size:0.82rem; color:#b9b9b9; margin-top:0.2rem;">
+    —
+  </div>
+</div>
+
     <div class="sat-img">
       <img id="radar-img"
            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
@@ -602,23 +608,53 @@ function setHeaderText(data) {
     }
   }
 
-  async function loadRadarImage() {
-    try {
-      if (window.location.protocol === 'file:') {
-        const img = document.getElementById('radar-img');
-        if (img) img.src = 'https://www.climasurgba.com.ar/radar/bahia_blanca-20251119-132703.png?t=' + Date.now();
-        return;
-      }
+function parseRadarDatetimeFromUrl(url) {
+  // ejemplo: bahia_blanca-20260218-110559.png
+  const m = String(url || "").match(/bahia_blanca-(\d{8})-(\d{6})\.png/i);
+  if (!m) return null;
 
+  const ymd = m[1]; // 20260218
+  const hms = m[2]; // 110559
+  const yyyy = ymd.slice(0, 4);
+  const mm = ymd.slice(4, 6);
+  const dd = ymd.slice(6, 8);
+  const hh = hms.slice(0, 2);
+  const mi = hms.slice(2, 4);
+  const ss = hms.slice(4, 6);
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${mi}:${ss}`;
+}
+
+async function loadRadarImage() {
+  try {
+    const radarTimeEl = document.getElementById('radar-time');
+    const img = document.getElementById('radar-img');
+
+    let latestUrl = null;
+
+    if (window.location.protocol === 'file:') {
+      // modo local: ejemplo
+      latestUrl = 'https://www.climasurgba.com.ar/radar/bahia_blanca-20260218-110559.png';
+    } else {
       const res = await fetch('/api/radar');
       if (!res.ok) throw new Error('Radar API error');
       const data = await res.json();
-      const img = document.getElementById('radar-img');
-      if (img && data.latestUrl) img.src = data.latestUrl + '?t=' + Date.now();
-    } catch (err) {
-      console.error('Radar error:', err);
+      latestUrl = data.latestUrl || null;
     }
+
+    if (img && latestUrl) {
+      img.src = latestUrl + '?t=' + Date.now();
+    }
+
+    if (radarTimeEl) {
+      const parsed = parseRadarDatetimeFromUrl(latestUrl);
+      radarTimeEl.textContent = parsed ? `Última imagen: ${parsed}` : 'Última imagen: —';
+    }
+  } catch (err) {
+    console.error('Radar error:', err);
   }
+}
+
 
   window.onload = () => {
     loadData();
@@ -629,4 +665,5 @@ function setHeaderText(data) {
 </script>
 </body>
 </html>
+
 
