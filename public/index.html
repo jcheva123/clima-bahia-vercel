@@ -6,6 +6,7 @@
   <title>Clima Bahía Blanca</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
   <style>
     * { box-sizing: border-box; }
 
@@ -23,98 +24,26 @@
       margin-bottom: 1rem;
       padding: 0.9rem 1rem;
       border-radius: 14px;
-      background: linear-gradient(90deg, #007bff, #00b4ff);
+      background: linear-gradient(90deg, #007bff, #00b4ff); /* se pisa por JS */
       color: #fff;
       box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+      transition: background 350ms ease;
     }
     .header-mobile h1 {
       margin: 0;
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: .02em;
-    }
-    .header-subtitle {
-      margin: .25rem 0 0;
-      font-size: .8rem;
-      opacity: .9;
-    }
-
-    /* CONTENEDOR CLIMA ACTUAL + PRÓXIMOS DÍAS */
-    .hero-wrapper {
-      margin-bottom: 1.5rem;
-    }
-.hero-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1.1fr; /* aprox 60% / 40% */
-  gap: 0.9rem;
-  align-items: stretch;
-}
-
-/* Eliminá por completo el @media anterior */
-
-
-    .today-card {
-      background: #1b1b1b;
-      border-radius: 18px;
-      padding: 1.2rem 1.3rem;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
-      border: 1px solid #333;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .today-main {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .today-icon {
-      font-size: 3rem;
-      width: 3.2rem;
-      text-align: center;
-    }
-
-    .today-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-
-    .today-temps {
-      display: flex;
-      flex-direction: column;
-      gap: 0.15rem;
-    }
-    .today-temps .now {
-      font-size: 2.2rem;
+      font-size: 1.12rem;
       font-weight: 750;
-      line-height: 1.0;
       letter-spacing: .01em;
-    }
-    .today-temps .range {
-      font-size: 0.95rem;
-      color: #aaa;
-      font-weight: 450;
-    }
-    .today-temps .range .min { color: #9c9c9c; }
-    .today-temps .range .max { color: #e0e0e0; font-weight: 700; }
-
-    .text-muted {
-      color: #ccc !important;
-    }
-    .current-time {
-      font-size: 1rem;
-      color: #aaa;
+      line-height: 1.2;
     }
 
-    /* PANEL PRÓXIMOS DÍAS */
+    /* CONTENEDOR PRÓXIMOS DÍAS (FULL WIDTH) */
+    .hero-wrapper { margin-bottom: 1.5rem; }
+
     .forecast-panel {
       background: #181818;
       border-radius: 18px;
-      padding: 1rem 1rem 0.7rem;
+      padding: 1rem 1rem 0.9rem;
       border: 1px solid #333;
       box-shadow: 0 6px 16px rgba(0,0,0,0.35);
       display: flex;
@@ -122,84 +51,76 @@
     }
     .forecast-title {
       font-size: 0.95rem;
-      font-weight: 600;
-      margin: 0 0 .6rem;
+      font-weight: 650;
+      margin: 0 0 .7rem;
       color: #ddd;
       text-transform: uppercase;
       letter-spacing: .06em;
     }
 
-    .forecast-small {
+    /* NUEVO: PRÓXIMOS DÍAS EN HORIZONTAL */
+    .forecast-row {
       display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      padding-bottom: 0.5rem;
-      max-height: 260px;
-      overflow-y: auto;
+      gap: 0.65rem;
+      overflow-x: auto;
+      padding-bottom: 0.35rem;
+      scroll-snap-type: x mandatory;
       scrollbar-width: thin;
       scrollbar-color: #444 #181818;
     }
-
-    .day-small {
+    .forecast-day {
+      min-width: 128px;
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+      border-radius: 14px;
+      padding: 0.65rem 0.75rem;
+      background: radial-gradient(circle at top left, #262626, #151515);
+      border: 1px solid #2f2f2f;
+    }
+    .fd-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.45rem 0.7rem;
-      border-radius: 12px;
-      background: radial-gradient(circle at top left, #262626, #151515);
-      border: 1px solid #2f2f2f;
-      font-size: 0.85rem;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
     }
-    .day-left {
-      display: flex;
-      align-items: center;
-      gap: 0.45rem;
-    }
-    .day-small .icon {
-      font-size: 1.25rem;
-      width: 1.5rem;
+    .fd-icon {
+      font-size: 1.35rem;
+      width: 1.6rem;
       text-align: center;
     }
-    .day-name {
+    .fd-day {
+      font-weight: 750;
+      font-size: 0.9rem;
       text-transform: lowercase;
     }
-    .day-name::first-letter {
-      text-transform: uppercase;
-    }
-    .day-date {
-      font-size: 0.75rem;
-      color: #aaa;
-    }
-    .day-temps {
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-align: right;
-      min-width: 64px;
-    }
-    .day-temps span {
-      display: block;
-      line-height: 1.1;
-    }
-    .day-temps .min {
-      color: #aaa;
-      font-weight: 400;
-    }
-    .day-temps .max {
-      font-weight: 600;
-    }
+    .fd-day::first-letter { text-transform: uppercase; }
 
-    .day-rain {
-      font-size: 0.75rem;
+    .fd-date {
+      font-size: 0.78rem;
+      color: #a8a8a8;
+      margin-top: -0.05rem;
+    }
+    .fd-temps {
+      margin-top: 0.35rem;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+    .fd-max { font-weight: 800; }
+    .fd-min { color: #aaa; font-weight: 500; }
+
+    .fd-rain {
+      margin-top: 0.3rem;
+      font-size: 0.78rem;
       color: #9fd1ff;
-      margin-top: 0.15rem;
-      text-align: right;
       white-space: nowrap;
     }
 
     /* SATÉLITES */
-    .sat-section {
-      margin-bottom: 1.5rem;
-    }
+    .sat-section { margin-bottom: 1.5rem; }
     .sat-title {
       font-size: 1rem;
       font-weight: 600;
@@ -224,7 +145,6 @@
       transform-origin: 20% 70%;
       object-fit: contain;
     }
-
     .smn-zoom {
       width: 1800px;
       height: 1080px;
@@ -232,7 +152,6 @@
       transform-origin: 35% 63%;
       object-fit: contain;
     }
-
     .radar-img {
       max-width: 100%;
       height: auto;
@@ -261,7 +180,7 @@
       border-radius: 12px;
       text-align: center;
       flex: 1;
-      min-width: 80px;
+      min-width: 110px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       border: 1px solid #333;
     }
@@ -273,7 +192,7 @@
     .precip-card h3 {
       margin: 0.25rem 0 0;
       font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 650;
       color: #fff;
     }
 
@@ -294,7 +213,7 @@
       margin-bottom: 0.6rem;
     }
     .other-title {
-      font-weight: 650;
+      font-weight: 750;
       font-size: 0.95rem;
       letter-spacing: .02em;
       color: #e6e6e6;
@@ -326,7 +245,7 @@
       margin-bottom: 0.55rem;
     }
     .other-name {
-      font-weight: 700;
+      font-weight: 800;
       font-size: 0.95rem;
       line-height: 1.15;
     }
@@ -347,6 +266,7 @@
       border-radius: 12px;
       padding: 0.5rem 0.55rem;
       text-align: left;
+      transition: box-shadow 220ms ease, border-color 220ms ease, transform 220ms ease;
     }
     .other-metric .label {
       font-size: 0.72rem;
@@ -355,7 +275,7 @@
     }
     .other-metric .value {
       font-size: 1.05rem;
-      font-weight: 750;
+      font-weight: 800;
       margin: 0.1rem 0 0;
       color: #fff;
     }
@@ -365,34 +285,15 @@
       color: #8d8d8d;
       line-height: 1.2;
     }
-    .other-skeleton {
-      opacity: 0.85;
-    }
 
-
-    .table-container {
-      overflow-x: auto;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      border: 1px solid #333;
-    }
-    .table {
-      margin: 0;
-      font-size: 0.85rem;
-      background: #1e1e1e;
-      color: #e0e0e0;
-    }
-    .table th {
-      font-weight: 600;
-      background: #252525;
-      color: #ccc;
-    }
-    .table td {
-      vertical-align: middle;
-      border-color: #333;
-    }
-    .table-hover tbody tr:hover {
-      background-color: #2a2a2a;
+    /* Glow celeste cuando hoy > 0.0 mm */
+    .rain-glow {
+      border-color: rgba(120, 210, 255, 0.65) !important;
+      box-shadow:
+        0 0 0 1px rgba(120, 210, 255, 0.20),
+        0 0 18px rgba(120, 210, 255, 0.28),
+        0 0 30px rgba(120, 210, 255, 0.12);
+      transform: translateY(-1px);
     }
 
     .footer {
@@ -407,39 +308,21 @@
     }
   </style>
 </head>
+
 <body>
 
-  <div class="header-mobile">
-    <h1>Clima Bahía Blanca</h1>
+  <div class="header-mobile" id="headerBar">
+    <h1 id="headerTitle">Clima Bahía Blanca</h1>
   </div>
 
-  <!-- CLIMA ACTUAL + PRÓXIMOS DÍAS -->
+  <!-- PRÓXIMOS DÍAS (HORIZONTAL) -->
   <div class="hero-wrapper">
-    <div class="hero-grid">
-      <!-- HOY -->
-      <section class="today-card" id="today-card">
-        <div class="today-main">
-          <div class="today-icon">⏳</div>
-          <div class="today-info">
-            <div class="today-temps">
-              
-              <div class="now"><span id="current-temp">—</span>°</div>
-              <div class="range"><span class="min">—</span> / <span class="max">—</span></div>
-            </div>
-            <div class="text-muted" id="current-date">—</div>
-            <div class="current-time" id="current-time">HH:MM</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- PRÓXIMOS DÍAS -->
-      <section class="forecast-panel">
-        <h2 class="forecast-title">Próximos días</h2>
-        <div class="forecast-small" id="forecast-small">
-          <!-- Se llena por JS -->
-        </div>
-      </section>
-    </div>
+    <section class="forecast-panel">
+      <h2 class="forecast-title">Próximos días</h2>
+      <div class="forecast-row" id="forecast-row">
+        <!-- Se llena por JS -->
+      </div>
+    </section>
   </div>
 
   <!-- WINDY (PRIMERO) -->
@@ -457,7 +340,7 @@
     </div>
   </div>
 
- <!-- GOES-19 ANIMADO PRIMERO -->
+  <!-- GOES-19 -->
   <div class="sat-section">
     <div class="goes-container">
       <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/13/GOES19-SSA-13-900x540.gif"
@@ -465,7 +348,7 @@
     </div>
   </div>
 
-  <!-- TOPES NUBOSOS SEGUNDO -->
+  <!-- TOPES NUBOSOS -->
   <div class="sat-section">
     <div class="sat-img">
       <img src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/SECTOR/ssa/11/latest.jpg"
@@ -488,13 +371,10 @@
     </small>
   </div>
 
-  <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 600;">Registro de Precipitaciones</h3>
+  <h3 class="mt-4 mb-3" style="font-size: 1.1rem; font-weight: 650;">Registro de Precipitaciones</h3>
 
+  <!-- SOLO: Mes (La Nueva), Media Hist. Mes, Año -->
   <div class="precip-summary">
-    <div class="precip-card">
-      <h5>Último registro (día)</h5>
-      <h3 id="today-rain">—</h3>
-    </div>
     <div class="precip-card">
       <h5>Mes (La Nueva)</h5>
       <h3 id="month-rain">—</h3>
@@ -509,6 +389,7 @@
     </div>
   </div>
 
+  <!-- OTROS REGISTROS (BCP) -->
   <div class="other-records">
     <div class="other-header">
       <div class="other-title">Otros registros</div>
@@ -516,47 +397,15 @@
     </div>
 
     <div class="other-grid" id="other-stations">
-      <div class="other-card other-skeleton">
+      <div class="other-card">
         <div class="other-top"><div class="other-name">Centro</div><span class="other-link">Cargando…</span></div>
         <div class="other-values">
-          <div class="other-metric"><p class="label">Día</p><p class="value">—</p></div>
-          <div class="other-metric"><p class="label">Mes</p><p class="value">—</p></div>
-        </div>
-        <div class="other-subline">Precip. 01/mm al dd/mm</div>
-      </div>
-      <div class="other-card other-skeleton">
-        <div class="other-top"><div class="other-name">Grünbein</div><span class="other-link">Cargando…</span></div>
-        <div class="other-values">
-          <div class="other-metric"><p class="label">Día</p><p class="value">—</p></div>
-          <div class="other-metric"><p class="label">Mes</p><p class="value">—</p></div>
-        </div>
-        <div class="other-subline">Precip. 01/mm al dd/mm</div>
-      </div>
-      <div class="other-card other-skeleton">
-        <div class="other-top"><div class="other-name">La Vitícola</div><span class="other-link">Cargando…</span></div>
-        <div class="other-values">
-          <div class="other-metric"><p class="label">Día</p><p class="value">—</p></div>
-          <div class="other-metric"><p class="label">Mes</p><p class="value">—</p></div>
+          <div class="other-metric"><p class="label">Precipitaciones del día</p><p class="value">—</p></div>
+          <div class="other-metric"><p class="label">Acumulado del mes</p><p class="value">—</p></div>
         </div>
         <div class="other-subline">Precip. 01/mm al dd/mm</div>
       </div>
     </div>
-  </div>
-
-
-  <div class="table-container">
-    <table class="table table-sm table-hover">
-      <thead class="table-light">
-        <tr>
-          <th>Día</th>
-          <th>Lluvia (mm)</th>
-          <th>Fuente</th>
-        </tr>
-      </thead>
-      <tbody id="precip-table">
-        <tr><td colspan="3" class="text-center">Cargando...</td></tr>
-      </tbody>
-    </table>
   </div>
 
   <div class="footer">
@@ -570,37 +419,78 @@
 <script>
   // Mock data para pruebas locales (comenta si usas servidor)
   const mockData = {
-    current: { temp: 24, icon: "⛅", text: "Parcialmente nublado" },
+    current: { temp: 27, icon: "⛅", text: "Parcialmente nublado" },
     forecast: [
-      { day: "Domingo", date: "17/11", min: 18, max: 28, icon: "⛅", rainMm: 0.0 },
-      { day: "Lunes",   date: "18/11", min: 16, max: 27, icon: "🌤️", rainMm: 0.0 },
-      { day: "Martes",  date: "19/11", min: 17, max: 29, icon: "🌧️", rainMm: 6.2 },
-      { day: "Miércoles", date: "20/11", min: 15, max: 26, icon: "☁️", rainMm: 0.0 },
-      { day: "Jueves",  date: "21/11", min: 19, max: 31, icon: "🌤️", rainMm: 0.0 },
-      { day: "Viernes", date: "22/11", min: 20, max: 30, icon: "🌧️", rainMm: 2.8 },
-      { day: "Sábado",  date: "23/11", min: 18, max: 28, icon: "⛅", rainMm: 0.0 }
+      { day: "miércoles", date: "18/2", min: 20, max: 29, icon: "⛅", rainMm: 0.0 },
+      { day: "jueves", date: "19/2", min: 16, max: 26, icon: "☁️", rainMm: 0.0 },
+      { day: "viernes", date: "20/2", min: 16, max: 32, icon: "☁️", rainMm: 0.0 },
+      { day: "sábado", date: "21/2", min: 19, max: 32, icon: "☁️", rainMm: 0.0 },
+      { day: "domingo", date: "22/2", min: 19, max: 34, icon: "☁️", rainMm: 0.0 },
+      { day: "lunes", date: "23/2", min: 19, max: 32, icon: "☁️", rainMm: 0.0 },
+      { day: "martes", date: "24/2", min: 18, max: 30, icon: "🌧️", rainMm: 3.2 }
     ],
-    summaries: {
-      today: "3.8 mm",
-      month: "21.6 mm",
-      historicalNov: "57.2 mm",
-      yearly: "999.6 mm"
-    },
-    precipRecords: [
-      { day: "Lunes", date: "01/02", rain: 3.8, source: "Meteostat" },
-      { day: "Domingo", date: "31/01", rain: 0.0, source: "Meteostat" },
-      { day: "Sábado", date: "30/01", rain: 1.2, source: "Meteostat" },
-      { day: "Viernes", date: "29/01", rain: 0.0, source: "Meteostat" },
-      { day: "Jueves", date: "28/01", rain: 8.5, source: "Meteostat" },
-      { day: "Miércoles", date: "27/01", rain: 4.9, source: "Meteostat" },
-      { day: "Martes", date: "26/01", rain: 0.0, source: "Meteostat" }
-    ],
+    summaries: { month: "10.3 mm", historicalNov: "66.2 mm", yearly: "37.3 mm" },
     bcpStations: [
-      { id: 29, short: "Centro", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=104", today_mm: 0.0, month_mm: 19.3, month_label: "Precip. 01/02 al 11/02" },
-      { id: 1, short: "Grünbein", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1", today_mm: 0.0, month_mm: 12.1, month_label: "Precip. 01/02 al 11/02" },
-      { id: 3, short: "La Vitícola", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3", today_mm: 0.0, month_mm: 17.8, month_label: "Precip. 01/02 al 11/02" }
+      { id: 29, short: "Centro", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=104", today_mm: 0.0, month_mm: 10.5, month_label: "Precip. 01/02 al 16/02" },
+      { id: 1, short: "Grünbein", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=1", today_mm: 11.0, month_mm: 25.1, month_label: "Precip. 01/02 al 16/02" },
+      { id: 3, short: "La Vitícola", link: "https://info.bcp.org.ar/Estaciones/Mapa.asp?Estacion=3", today_mm: 0.0, month_mm: 24.1, month_label: "Precip. 01/02 al 16/02" }
     ]
   };
+
+  // ─────────────────────────────────────────────────────────────
+  // Barra por temperatura: -10°C (frío) → 45°C (calor)
+  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function rgb(r, g, b) {
+    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+  }
+
+  function tempToColor(tempC) {
+    const t = clamp((tempC - (-10)) / (45 - (-10)), 0, 1);
+    // frío: azul blanquino
+    const cold = { r: 225, g: 245, b: 255 };
+    // calor: rojo fuego
+    const hot  = { r: 255, g: 55,  b: 0 };
+
+    return rgb(
+      lerp(cold.r, hot.r, t),
+      lerp(cold.g, hot.g, t),
+      lerp(cold.b, hot.b, t)
+    );
+  }
+
+  function applyHeaderTheme(tempC) {
+    const bar = document.getElementById("headerBar");
+    if (!bar || typeof tempC !== "number") return;
+
+    const c1 = tempToColor(tempC);
+    // un segundo color para darle profundidad (un toque más oscuro)
+    const c2 = tempToColor(tempC + 6);
+
+    bar.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
+  }
+
+  function setHeaderText(data) {
+    const titleEl = document.getElementById("headerTitle");
+    if (!titleEl) return;
+
+    const today = (data.forecast && data.forecast[0]) ? data.forecast[0] : null;
+    const curT = (data.current && typeof data.current.temp === "number") ? data.current.temp : null;
+    const icon = (data.current && data.current.icon) ? data.current.icon : (today?.icon || "⛅");
+
+    if (!today || curT == null) {
+      titleEl.textContent = "Clima Bahía Blanca";
+      return;
+    }
+
+    // Formato pedido: "Clima Bahía Blanca: ⛅ 27° 20° / 29°  miércoles 18/2"
+    titleEl.textContent = `Clima Bahía Blanca: ${icon} ${curT}° ${today.min}° / ${today.max}°  ${today.day} ${today.date}`;
+
+    // color barra según temperatura (uso la actual; si querés usar la máxima del día, cambiá curT por today.max)
+    applyHeaderTheme(curT);
+  }
 
   async function loadData() {
     try {
@@ -614,66 +504,48 @@
         data = await res.json();
       }
 
-      // ── Tarjeta HOY ─────────────────────────────────────────
-      const today = (data.forecast && data.forecast[0]) ? data.forecast[0] : null;
-      const todayCard = document.querySelector('#today-card');
-      if (todayCard && today) {
-        const iconEl = todayCard.querySelector('.today-icon');
-        if (iconEl) iconEl.textContent = (data.current && data.current.icon) ? data.current.icon : (today.icon || '⛅');
+      // ── Barra superior con info actual ───────────────────────
+      setHeaderText(data);
 
-        const currentTempEl = document.getElementById('current-temp');
-        if (currentTempEl && data.current && typeof data.current.temp === 'number') {
-          currentTempEl.textContent = data.current.temp;
-        }
-
-        const minEl = todayCard.querySelector('.today-temps .min');
-        const maxEl = todayCard.querySelector('.today-temps .max');
-        if (minEl) minEl.textContent = `${today.min}°`;
-        if (maxEl) maxEl.textContent = `${today.max}°`;
-
-        const dateEl = document.getElementById('current-date');
-        if (dateEl) dateEl.textContent = `${today.day} ${today.date}`;
-      }
-
-      // ── Próximos días (con mm si llueve) ────────────────────
-      const future = (data.forecast || []).slice(1, 7);
-      const container = document.getElementById('forecast-small');
-      if (container) {
-        container.innerHTML = '';
-        future.forEach(d => {
+      // ── Próximos días (HORIZONTAL) ───────────────────────────
+      // Incluye HOY + siguientes
+      const days = (data.forecast || []).slice(0, 7);
+      const row = document.getElementById('forecast-row');
+      if (row) {
+        row.innerHTML = '';
+        days.forEach(d => {
           const rainLine = (typeof d.rainMm === 'number' && d.rainMm >= 0.1)
-            ? `<div class="day-rain">🌧️ ${d.rainMm.toFixed(1)} mm</div>`
+            ? `<div class="fd-rain">🌧️ ${d.rainMm.toFixed(1)} mm</div>`
             : '';
-          container.innerHTML += `
-            <div class="day-small">
-              <div class="day-left">
-                <div class="icon">${d.icon || ''}</div>
-                <div>
-                  <div class="day-name">${d.day.slice(0,3)}</div>
-                  <div class="day-date">${d.date}</div>
+
+          row.innerHTML += `
+            <div class="forecast-day">
+              <div class="fd-top">
+                <div class="fd-icon">${d.icon || ''}</div>
+                <div style="text-align:right;">
+                  <div class="fd-day">${(d.day || '').slice(0,3)}</div>
+                  <div class="fd-date">${d.date || ''}</div>
                 </div>
               </div>
-              <div class="day-temps">
-                <span class="max">${d.max}°</span>
-                <span class="min">${d.min}°</span>
-                ${rainLine}
+              <div class="fd-temps">
+                <span class="fd-max">${d.max}°</span>
+                <span class="fd-min">${d.min}°</span>
               </div>
+              ${rainLine}
             </div>`;
         });
       }
 
-      // ── Resumen precipitaciones ─────────────────────────────
+      // ── Resumen precipitaciones (SIN "Último registro (día)") ─
       const setText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
       };
-      setText('today-rain', data.summaries?.today ?? '—');
       setText('month-rain', data.summaries?.month ?? '—');
       setText('hist-nov', data.summaries?.historicalNov ?? '—');
       setText('year-rain', data.summaries?.yearly ?? '—');
 
-
-      // ── Otros registros (BCP) ──────────────────────────────
+      // ── Otros registros (BCP) + glow si hoy > 0.0 ────────────
       const otherWrap = document.getElementById('other-stations');
       if (otherWrap) {
         const stations = Array.isArray(data.bcpStations) ? data.bcpStations : [];
@@ -682,11 +554,14 @@
         } else {
           otherWrap.innerHTML = '';
           stations.forEach(s => {
-            const day = (typeof s.today_mm === 'number') ? `${s.today_mm.toFixed(1)} mm` : '—';
+            const todayMmNum = (typeof s.today_mm === 'number') ? s.today_mm : null;
+            const day = (todayMmNum != null) ? `${todayMmNum.toFixed(1)} mm` : '—';
             const month = (typeof s.month_mm === 'number') ? `${s.month_mm.toFixed(1)} mm` : '—';
             const sub = (s.month_label || '');
             const name = (s.short || s.label || 'Estación').toString();
             const link = (s.link || '#');
+
+            const glowClass = (todayMmNum != null && todayMmNum > 0.0) ? 'rain-glow' : '';
 
             otherWrap.innerHTML += `
               <div class="other-card">
@@ -696,7 +571,7 @@
                 </div>
 
                 <div class="other-values">
-                  <div class="other-metric">
+                  <div class="other-metric ${glowClass}">
                     <p class="label">Precipitaciones del día</p>
                     <p class="value">${day}</p>
                   </div>
@@ -712,37 +587,9 @@
         }
       }
 
-      // ── Tabla: últimos 7 días ───────────────────────────────
-      const tbody = document.getElementById('precip-table');
-      if (tbody) {
-        tbody.innerHTML = '';
-        const recent = data.precipRecords || [];
-        if (recent.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3" class="text-center">Sin registros</td></tr>';
-        } else {
-          recent.forEach(r => {
-            const rainText = (typeof r.rain === 'number') ? `${r.rain.toFixed(1)} mm` : '—';
-            tbody.innerHTML += `
-              <tr>
-                <td><strong>${(r.day || '').toString().replace(/^./, c => c.toUpperCase())}</strong><br><small>${r.date || ''}</small></td>
-                <td><strong>${rainText}</strong></td>
-                <td><small>${r.source || ''}</small></td>
-              </tr>`;
-          });
-        }
-      }
     } catch (err) {
       console.error('Error:', err);
     }
-  }
-
-  function updateTime() {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const el = document.getElementById('current-time');
-    if (el) el.textContent = `${hh}:${mm}:${ss}`;
   }
 
   async function loadRadarImage() {
@@ -764,17 +611,11 @@
   }
 
   window.onload = () => {
-    if (window.location.protocol === 'file:') {
-      alert('¡Modo local detectado! Los datos son mock y el radar aproximado. Usa un servidor o Vercel para versión completa.');
-    }
     loadData();
     loadRadarImage();
-    updateTime();
-    setInterval(updateTime, 1000);
     setInterval(loadData, 900000);       // 15 min
     setInterval(loadRadarImage, 300000); // 5 min radar
   };
 </script>
 </body>
 </html>
-
