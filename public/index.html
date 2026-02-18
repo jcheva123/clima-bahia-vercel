@@ -17,6 +17,14 @@
       background: #121212;
       color: #e0e0e0;
     }
+#headerTitle .temp-now{
+  font-weight: 900;
+}
+#headerTitle .temp-range{
+  font-size: 0.92em;
+  font-weight: 600;
+  opacity: 0.95;
+}
 
     /* BARRA SUPERIOR */
     .header-mobile {
@@ -312,7 +320,8 @@
 <body>
 
   <div class="header-mobile" id="headerBar">
-    <h1 id="headerTitle">Clima Bahía Blanca</h1>
+  <h1 id="headerTitle">Clima Bahía Blanca</h1>
+
   </div>
 
   <!-- PRÓXIMOS DÍAS (HORIZONTAL) -->
@@ -472,25 +481,26 @@
     bar.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
   }
 
-  function setHeaderText(data) {
-    const titleEl = document.getElementById("headerTitle");
-    if (!titleEl) return;
+function setHeaderText(data) {
+  const titleEl = document.getElementById("headerTitle");
+  if (!titleEl) return;
 
-    const today = (data.forecast && data.forecast[0]) ? data.forecast[0] : null;
-    const curT = (data.current && typeof data.current.temp === "number") ? data.current.temp : null;
-    const icon = (data.current && data.current.icon) ? data.current.icon : (today?.icon || "⛅");
+  const today = (data.forecast && data.forecast[0]) ? data.forecast[0] : null;
+  const curT = (data.current && typeof data.current.temp === "number") ? data.current.temp : null;
+  const icon = (data.current && data.current.icon) ? data.current.icon : (today?.icon || "⛅");
 
-    if (!today || curT == null) {
-      titleEl.textContent = "Clima Bahía Blanca";
-      return;
-    }
-
-    // Formato pedido: "Clima Bahía Blanca: ⛅ 27° 20° / 29°  miércoles 18/2"
-    titleEl.textContent = `Clima Bahía Blanca: ${icon} ${curT}° ${today.min}° / ${today.max}°  ${today.day} ${today.date}`;
-
-    // color barra según temperatura (uso la actual; si querés usar la máxima del día, cambiá curT por today.max)
-    applyHeaderTheme(curT);
+  if (!today || curT == null) {
+    titleEl.textContent = "Clima Bahía Blanca";
+    return;
   }
+
+  // Formato pedido: "Clima Bahía Blanca:  28° ⛅ 20° / 29°"
+  titleEl.innerHTML = `Clima Bahía Blanca: <span class="temp-now">${curT}°</span> ${icon} <span class="temp-range">${today.min}° / ${today.max}°</span>`;
+
+  // Color barra según temperatura actual (si preferís max, usá today.max)
+  applyHeaderTheme(curT);
+}
+
 
   async function loadData() {
     try {
@@ -619,3 +629,4 @@
 </script>
 </body>
 </html>
+
