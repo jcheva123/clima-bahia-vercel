@@ -18,16 +18,15 @@
       color: #e0e0e0;
     }
 
-    /* BARRA SUPERIOR */
+    /* BARRA SUPERIOR (ahora queda fija, el color dinámico va en el badge) */
     .header-mobile {
       text-align: left;
       margin-bottom: 1rem;
       padding: 0.9rem 1rem;
       border-radius: 14px;
-      background: linear-gradient(90deg, #007bff, #00b4ff); /* se pisa por JS */
+      background: #171717;
       color: #fff;
       box-shadow: 0 6px 16px rgba(0,0,0,0.35);
-      transition: background 350ms ease;
     }
     .header-mobile h1 {
       margin: 0;
@@ -37,7 +36,18 @@
       line-height: 1.2;
     }
 
-    /* Ajustes de formato para el título dinámico */
+    /* Badge coloreado solo para "24° ☀️:" */
+    #headerTitle .temp-badge{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.18rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      background: #ffffff;          /* se pisa por JS */
+      color: #111;                  /* se ajusta por JS */
+    }
     #headerTitle .temp-now{
       font-weight: 900;
     }
@@ -45,6 +55,7 @@
       font-size: 0.92em;
       font-weight: 600;
       opacity: 0.95;
+      margin-left: 0.35rem;
     }
 
     /* CONTENEDOR PRÓXIMOS DÍAS (FULL WIDTH) */
@@ -151,13 +162,13 @@
     .goes-img {
       width: 900px;
       height: 540px;
-      transform: scale(2.9);
-      transform-origin: 35% 62%;
+      transform: scale(1.9);
+      transform-origin: 20% 70%;
       object-fit: contain;
     }
     .smn-zoom {
-      width: 3600px;
-      height: 2160px;
+      width: 1800px;
+      height: 1080px;
       transform: scale(2.9);
       transform-origin: 35% 63%;
       object-fit: contain;
@@ -432,7 +443,7 @@
 <script>
   // Mock data para pruebas locales (comenta si usas servidor)
   const mockData = {
-    current: { temp: 28, icon: "⛅", text: "Parcialmente nublado" },
+    current: { temp: 24, icon: "☀️", text: "Despejado" },
     forecast: [
       { day: "miércoles", date: "18/2", min: 20, max: 29, icon: "⛅", rainMm: 0.0 },
       { day: "jueves", date: "19/2", min: 16, max: 26, icon: "☁️", rainMm: 0.0 },
@@ -451,33 +462,63 @@
   };
 
   // ─────────────────────────────────────────────────────────────
-  // Barra por temperatura: -10°C (frío) → 45°C (calor)
-  function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-  function lerp(a, b, t) { return a + (b - a) * t; }
-  function rgb(r, g, b) { return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`; }
+  // Badge por temperatura:
+  //   <=0  blanco
+  //   10   celeste
+  //   20   verde claro
+  //   >=40 rojo
+  function hexToRgb(hex) {
+    const h = hex.replace('#','').trim();
+    const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    const n = parseInt(full, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+  function rgbToCss(c){ return `rgb(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)})`; }
+  function mix(a, b, t){
+    return {
+      r: a.r + (b.r - a.r) * t,
+      g: a.g + (b.g - a.g) * t,
+      b: a.b + (b.b - a.b) * t,
+    };
+  }
+  function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
-  function tempToColor(tempC) {
-    const t = clamp((tempC - (-10)) / (45 - (-10)), 0, 1);
-    // frío: azul blanquino
-    const cold = { r: 225, g: 245, b: 255 };
-    // calor: rojo fuego
-    const hot  = { r: 255, g: 55,  b: 0 };
+  function tempToBadgeColor(tempC) {
+    const WHITE   = hexToRgb("#ffffff");
+    const CELESTE = hexToRgb("#7fd7ff"); // celeste
+    const GREEN   = hexToRgb("#9dffb0"); // verde claro
+    const RED     = hexToRgb("#ff2b2b"); // rojo
 
-    return rgb(
-      lerp(cold.r, hot.r, t),
-      lerp(cold.g, hot.g, t),
-      lerp(cold.b, hot.b, t)
-    );
+    if (tempC <= 0) return { bg: rgbToCss(WHITE), text: "#111" };
+
+    if (tempC <= 10) {
+      const t = clamp01((tempC - 0) / 10);
+      const c = mix(WHITE, CELESTE, t);
+      return { bg: rgbToCss(c), text: "#0d2230" };
+    }
+
+    if (tempC <= 20) {
+      const t = clamp01((tempC - 10) / 10);
+      const c = mix(CELESTE, GREEN, t);
+      return { bg: rgbToCss(c), text: "#0d2a17" };
+    }
+
+    if (tempC <= 40) {
+      const t = clamp01((tempC - 20) / 20);
+      const c = mix(GREEN, RED, t);
+      return { bg: rgbToCss(c), text: "#1a0a0a" };
+    }
+
+    return { bg: rgbToCss(RED), text: "#fff" };
   }
 
-  function applyHeaderTheme(tempC) {
-    const bar = document.getElementById("headerBar");
-    if (!bar || typeof tempC !== "number") return;
+  function applyTempBadgeTheme(tempC) {
+    const badge = document.getElementById("tempBadge");
+    if (!badge || typeof tempC !== "number") return;
 
-    const c1 = tempToColor(tempC);
-    const c2 = tempToColor(tempC + 6);
-
-    bar.style.background = `linear-gradient(90deg, ${c1}, ${c2})`;
+    const { bg, text } = tempToBadgeColor(tempC);
+    badge.style.background = bg;
+    badge.style.color = text;
   }
 
   function setHeaderText(data) {
@@ -493,11 +534,16 @@
       return;
     }
 
-    // Formato pedido: "Clima Bahía Blanca:  28° ⛅ 20° / 29°"
-    titleEl.innerHTML = `Clima Bahía Blanca: <span class="temp-now">${curT}°</span> ${icon} <span class="temp-range">${today.min}° / ${today.max}°</span>`;
+    // Formato: "Clima Bahía Blanca: [24° ☀️:] 20° / 29°"
+    titleEl.innerHTML =
+      `Clima Bahía Blanca: ` +
+      `<span id="tempBadge" class="temp-badge">` +
+        `<span class="temp-now">${curT}°</span> ${icon}:` +
+      `</span>` +
+      `<span class="temp-range">${today.min}° / ${today.max}°</span>`;
 
-    // Color barra según temperatura actual (si preferís max: applyHeaderTheme(today.max))
-    applyHeaderTheme(curT);
+    // Color SOLO para el badge
+    applyTempBadgeTheme(curT);
   }
 
   async function loadData() {
@@ -543,7 +589,7 @@
         });
       }
 
-      // ── Resumen precipitaciones (SIN "Último registro (día)") ─
+      // ── Resumen precipitaciones ─
       const setText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value;
@@ -654,5 +700,3 @@
 </script>
 </body>
 </html>
-
-
