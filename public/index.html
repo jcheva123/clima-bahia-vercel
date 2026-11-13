@@ -275,15 +275,14 @@
       border-radius: 12px;
       background: #181f29;
     }
-    .lightning-view > :is(video, img) {
+    .lightning-view > img {
       display: block;
       width: 100%;
       height: 100%;
       object-fit: contain;
-      transform: scale(1.5);
-      transform-origin: center;
+      transform: scale(2);
+      transform-origin: 60% 65%;
     }
-    .lightning-view > [hidden] { display: none; }
     .lightning-tools {
       display: flex;
       align-items: center;
@@ -495,14 +494,12 @@
   <details class="sat-section radar-disclosure" id="lightning-disclosure">
     <summary class="radar-toggle">⚡ Rayos y tormentas</summary>
     <div class="lightning-view">
-      <video id="lightning-video" muted loop playsinline preload="none"
-             aria-label="Animación de actividad eléctrica en el sur de Sudamérica"
-             data-src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/GOES19-SSA-EXTENT3-900x540.mp4"></video>
-      <img id="lightning-still" hidden alt="Imagen satelital de actividad eléctrica en el sur de Sudamérica"
-           data-src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/900x540.jpg">
+      <img id="lightning-image" alt="Actividad eléctrica sobre Argentina y el sur de Sudamérica"
+           data-animation="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/GOES19-SSA-EXTENT3-900x540.gif"
+           data-still="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/1800x1080.jpg">
     </div>
     <div class="lightning-tools">
-      <button id="lightning-play" type="button">Reproducir</button>
+      <button id="lightning-mode" type="button">Ver imagen fija</button>
       <a href="https://www.star.nesdis.noaa.gov/GOES/sector_band.php?band=EXTENT3&amp;length=12&amp;sat=G19&amp;sector=ssa"
          target="_blank" rel="noopener noreferrer">Visor NOAA · GOES-19</a>
       <span id="lightning-status" role="status"></span>
@@ -753,47 +750,38 @@
 
   function setupLightningViewer() {
     const disclosure = document.getElementById('lightning-disclosure');
-    const video = document.getElementById('lightning-video');
-    const still = document.getElementById('lightning-still');
-    const playButton = document.getElementById('lightning-play');
+    const frame = document.getElementById('lightning-image');
+    const modeButton = document.getElementById('lightning-mode');
     const status = document.getElementById('lightning-status');
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let animated = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function playAnimation() {
-      if (!video.hasAttribute('src')) video.src = video.dataset.src;
-      video.play().catch(() => {});
+    function showFrame() {
+      modeButton.textContent = animated ? 'Ver imagen fija' : 'Ver animación';
+      if (!disclosure.open) return;
+
+      const source = animated ? frame.dataset.animation : frame.dataset.still;
+      if (frame.getAttribute('src') === source) return;
+
+      status.textContent = animated ? 'Cargando animación…' : 'Cargando imagen…';
+      frame.src = source;
     }
 
-    function toggleViewer() {
-      if (!disclosure.open) {
-        video.pause();
-        return;
+    disclosure.addEventListener('toggle', showFrame);
+    modeButton.addEventListener('click', () => {
+      animated = !animated;
+      showFrame();
+    });
+    frame.addEventListener('load', () => { status.textContent = ''; });
+    frame.addEventListener('error', () => {
+      if (animated) {
+        animated = false;
+        showFrame();
+      } else {
+        status.textContent = 'Imagen no disponible';
       }
-      if (video.hidden) return;
-      if (!video.poster) video.poster = still.dataset.src;
-      if (!reducedMotion.matches) playAnimation();
-    }
-
-    disclosure.addEventListener('toggle', toggleViewer);
-    playButton.addEventListener('click', () => {
-      if (video.paused) playAnimation();
-      else video.pause();
-    });
-    video.addEventListener('play', () => { playButton.textContent = 'Pausar'; });
-    video.addEventListener('pause', () => { playButton.textContent = 'Reproducir'; });
-    video.addEventListener('error', () => {
-      video.hidden = true;
-      playButton.hidden = true;
-      still.src = still.dataset.src;
-      still.hidden = false;
-      status.textContent = 'Última imagen disponible';
-    });
-    still.addEventListener('error', () => {
-      still.hidden = true;
-      status.textContent = 'Imagen no disponible';
     });
 
-    toggleViewer();
+    showFrame();
   }
 
   setupLightningViewer();
