@@ -268,20 +268,21 @@
       position: relative;
       width: 100%;
       max-width: 900px;
-      aspect-ratio: 5 / 3;
+      aspect-ratio: 900 / 600;
       margin-top: .55rem;
       overflow: hidden;
-      border: 1px solid #304358;
+      outline: 1px solid #304358;
       border-radius: 12px;
       background: #181f29;
     }
     .lightning-view > img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      transform: scale(2);
-      transform-origin: 60% 65%;
+      position: absolute;
+      /* Fuente 3600 × 2160. Recorte 900 × 600 desde (1100, 950). */
+      width: calc(3600 / 900 * 100%);
+      max-width: none;
+      height: calc(2160 / 600 * 100%);
+      left: calc(-1100 / 900 * 100%);
+      top: calc(-950 / 600 * 100%);
     }
     .lightning-tools {
       display: flex;
@@ -292,13 +293,6 @@
       font-size: .8rem;
     }
     .lightning-tools a { color: #a7d9ff; }
-    .lightning-tools button {
-      padding: .35rem .6rem;
-      border: 1px solid #304358;
-      border-radius: 8px;
-      background: #181f29;
-      color: #f0f6fc;
-    }
 
     .rain-title {
       margin: 0 0 .65rem;
@@ -494,12 +488,10 @@
   <details class="sat-section radar-disclosure" id="lightning-disclosure">
     <summary class="radar-toggle">⚡ Rayos y tormentas</summary>
     <div class="lightning-view">
-      <img id="lightning-image" alt="Actividad eléctrica sobre Argentina y el sur de Sudamérica"
-           data-animation="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/GOES19-SSA-EXTENT3-900x540.gif"
-           data-still="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/1800x1080.jpg">
+      <img id="lightning-image" alt="Actividad eléctrica sobre la provincia de Buenos Aires" hidden
+           data-src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/3600x2160.jpg">
     </div>
     <div class="lightning-tools">
-      <button id="lightning-mode" type="button">Ver imagen fija</button>
       <a href="https://www.star.nesdis.noaa.gov/GOES/sector_band.php?band=EXTENT3&amp;length=12&amp;sat=G19&amp;sector=ssa"
          target="_blank" rel="noopener noreferrer">Visor NOAA · GOES-19</a>
       <span id="lightning-status" role="status"></span>
@@ -751,37 +743,32 @@
   function setupLightningViewer() {
     const disclosure = document.getElementById('lightning-disclosure');
     const frame = document.getElementById('lightning-image');
-    const modeButton = document.getElementById('lightning-mode');
     const status = document.getElementById('lightning-status');
-    let animated = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const refreshMs = 5 * 60 * 1000;
 
-    function showFrame() {
-      modeButton.textContent = animated ? 'Ver imagen fija' : 'Ver animación';
+    function loadFrame() {
       if (!disclosure.open) return;
 
-      const source = animated ? frame.dataset.animation : frame.dataset.still;
+      const updateWindow = Math.floor(Date.now() / refreshMs);
+      const source = `${frame.dataset.src}?v=${updateWindow}`;
       if (frame.getAttribute('src') === source) return;
 
-      status.textContent = animated ? 'Cargando animación…' : 'Cargando imagen…';
+      status.textContent = 'Cargando imagen…';
       frame.src = source;
     }
 
-    disclosure.addEventListener('toggle', showFrame);
-    modeButton.addEventListener('click', () => {
-      animated = !animated;
-      showFrame();
+    disclosure.addEventListener('toggle', loadFrame);
+    frame.addEventListener('load', () => {
+      frame.hidden = false;
+      status.textContent = '';
     });
-    frame.addEventListener('load', () => { status.textContent = ''; });
     frame.addEventListener('error', () => {
-      if (animated) {
-        animated = false;
-        showFrame();
-      } else {
-        status.textContent = 'Imagen no disponible';
-      }
+      frame.hidden = true;
+      status.textContent = 'Imagen no disponible';
     });
 
-    showFrame();
+    setInterval(loadFrame, refreshMs);
+    loadFrame();
   }
 
   setupLightningViewer();
