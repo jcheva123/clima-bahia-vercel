@@ -264,6 +264,43 @@
       font-size: .8rem;
     }
 
+    .lightning-view {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      aspect-ratio: 5 / 3;
+      margin-top: .55rem;
+      overflow: hidden;
+      border: 1px solid #304358;
+      border-radius: 12px;
+      background: #181f29;
+    }
+    .lightning-view > :is(video, img) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(1.5);
+      transform-origin: center;
+    }
+    .lightning-view > [hidden] { display: none; }
+    .lightning-tools {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .55rem 1rem;
+      margin-top: .45rem;
+      font-size: .8rem;
+    }
+    .lightning-tools a { color: #a7d9ff; }
+    .lightning-tools button {
+      padding: .35rem .6rem;
+      border: 1px solid #304358;
+      border-radius: 8px;
+      background: #181f29;
+      color: #f0f6fc;
+    }
+
     .rain-title {
       margin: 0 0 .65rem;
       font-size: 1.15rem;
@@ -453,6 +490,23 @@
            alt="Radar de precipitaciones de Bahía Blanca" />
     </div>
     <p class="radar-meta">ClimaSurGBA · dBZ</p>
+  </details>
+
+  <details class="sat-section radar-disclosure" id="lightning-disclosure">
+    <summary class="radar-toggle">⚡ Rayos y tormentas</summary>
+    <div class="lightning-view">
+      <video id="lightning-video" muted loop playsinline preload="none"
+             aria-label="Animación de actividad eléctrica en el sur de Sudamérica"
+             data-src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/GOES19-SSA-EXTENT3-900x540.mp4"></video>
+      <img id="lightning-still" hidden alt="Imagen satelital de actividad eléctrica en el sur de Sudamérica"
+           data-src="https://cdn.star.nesdis.noaa.gov/GOES19/GLM/SECTOR/ssa/EXTENT3/900x540.jpg">
+    </div>
+    <div class="lightning-tools">
+      <button id="lightning-play" type="button">Reproducir</button>
+      <a href="https://www.star.nesdis.noaa.gov/GOES/sector_band.php?band=EXTENT3&amp;length=12&amp;sat=G19&amp;sector=ssa"
+         target="_blank" rel="noopener noreferrer">Visor NOAA · GOES-19</a>
+      <span id="lightning-status" role="status"></span>
+    </div>
   </details>
 
   <section aria-labelledby="rain-title">
@@ -696,6 +750,53 @@
       console.error('Radar error:', err);
     }
   }
+
+  function setupLightningViewer() {
+    const disclosure = document.getElementById('lightning-disclosure');
+    const video = document.getElementById('lightning-video');
+    const still = document.getElementById('lightning-still');
+    const playButton = document.getElementById('lightning-play');
+    const status = document.getElementById('lightning-status');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function playAnimation() {
+      if (!video.hasAttribute('src')) video.src = video.dataset.src;
+      video.play().catch(() => {});
+    }
+
+    function toggleViewer() {
+      if (!disclosure.open) {
+        video.pause();
+        return;
+      }
+      if (video.hidden) return;
+      if (!video.poster) video.poster = still.dataset.src;
+      if (!reducedMotion.matches) playAnimation();
+    }
+
+    disclosure.addEventListener('toggle', toggleViewer);
+    playButton.addEventListener('click', () => {
+      if (video.paused) playAnimation();
+      else video.pause();
+    });
+    video.addEventListener('play', () => { playButton.textContent = 'Pausar'; });
+    video.addEventListener('pause', () => { playButton.textContent = 'Reproducir'; });
+    video.addEventListener('error', () => {
+      video.hidden = true;
+      playButton.hidden = true;
+      still.src = still.dataset.src;
+      still.hidden = false;
+      status.textContent = 'Última imagen disponible';
+    });
+    still.addEventListener('error', () => {
+      still.hidden = true;
+      status.textContent = 'Imagen no disponible';
+    });
+
+    toggleViewer();
+  }
+
+  setupLightningViewer();
 
   window.onload = () => {
     loadData();
